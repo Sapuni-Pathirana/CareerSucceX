@@ -1,9 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply bg-surface-50 text-slate-900 antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  ::selection {
+    @apply bg-brand-200 text-brand-900;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-slate-300;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+}
+
+@layer components {
+  /* ── Glass card ─────────────────────────────────────── */
+  .glass {
+    @apply rounded-2xl border border-white/60 bg-white/80 shadow-glass backdrop-blur-sm;
+  }
+
+  .glass-dark {
+    @apply rounded-2xl border border-white/10 bg-white/5 shadow-glass backdrop-blur-md;
+  }
+
+  /* ── Aurora button ──────────────────────────────────── */
+  .btn-aurora {
+    @apply relative overflow-hidden rounded-xl bg-aurora px-5 py-2.5 text-sm font-semibold text-white shadow-aurora
+           transition-all duration-300 hover:shadow-glow-lg hover:scale-[1.02] active:scale-[0.98];
+  }
+
+  .btn-aurora::before {
+    content: '';
+    @apply absolute inset-0 rounded-xl bg-white/20 opacity-0 transition-opacity duration-200;
+  }
+
+  .btn-aurora:hover::before {
+    @apply opacity-100;
+  }
+
+  .btn-ghost {
+    @apply rounded-xl border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700
+           backdrop-blur-sm transition-all duration-200 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700
+           hover:shadow-glow-sm active:scale-[0.98];
+  }
+
+  /* ── Animated card ──────────────────────────────────── */
+  .card {
+    @apply rounded-2xl border border-slate-200/80 bg-white shadow-card transition-all duration-300;
+  }
+
+  .card-hover {
+    @apply card hover:border-brand-200 hover:-translate-y-0.5 hover:shadow-card-hover;
+  }
+
+  /* ── Stat number ────────────────────────────────────── */
+  .stat-number {
+    @apply bg-aurora bg-clip-text text-4xl font-extrabold text-transparent;
+  }
+
+  /* ── Input ──────────────────────────────────────────── */
+  .input {
+    @apply w-full rounded-xl border border-slate-300 bg-white/80 px-4 py-2.5 text-sm text-slate-900
+           backdrop-blur-sm transition-all duration-200 placeholder:text-slate-400
+           focus:border-brand-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-200/60;
+  }
+
+  /* ── Pill badge ─────────────────────────────────────── */
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+  }
+
+  /* ── Section reveal (used with JS IntersectionObserver) */
+  .reveal {
+    @apply opacity-0 translate-y-4 transition-all duration-700 ease-spring;
+  }
+
+  .reveal.visible {
+    @apply opacity-100 translate-y-0;
+  }
+
+  /* ── Shimmer loading skeleton ───────────────────────── */
+  .skeleton {
+    @apply animate-pulse rounded-lg bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%];
+    animation: shimmer 1.6s linear infinite;
+  }
+
+  /* ── Nav link active indicator ──────────────────────── */
+  .nav-link {
+    @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200;
+  }
+
+  .nav-link.active {
+    @apply bg-white/15 text-white;
+  }
+
+  .nav-link.active::before {
+    content: '';
+    @apply absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-white;
+  }
+
+  .nav-link:not(.active) {
+    @apply text-indigo-200 hover:bg-white/10 hover:text-white;
+  }
+}
+
+@layer utilities {
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-150 { animation-delay: 150ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+  .animate-delay-400 { animation-delay: 400ms; }
+  .animate-delay-500 { animation-delay: 500ms; }
+  .animate-delay-600 { animation-delay: 600ms; }
+  .animate-delay-700 { animation-delay: 700ms; }
+  .animate-delay-800 { animation-delay: 800ms; }
+
+  .text-gradient {
+    @apply bg-aurora bg-clip-text text-transparent;
+  }
+
+  .border-gradient {
+    border-image: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899) 1;
+  }
+
+  .bg-dot-pattern {
+    background-image: radial-gradient(rgba(99,102,241,0.12) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(rgba(99,102,241,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,102,241,0.06) 1px, transparent 1px);
+    background-size: 32px 32px;
   }
 }

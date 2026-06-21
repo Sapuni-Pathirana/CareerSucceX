@@ -1,20 +1,23 @@
+import type { ReactNode } from 'react';
+
 interface EmptyStateProps {
   title: string;
   description?: string;
-  action?: React.ReactNode;
+  action?: ReactNode;
+  icon?: string;
 }
 
-export default function EmptyState({ title, description, action }: EmptyStateProps) {
+export default function EmptyState({ title, description, action, icon = '◎' }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-brand-600">
-        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white/60 py-16 text-center animate-fade-in backdrop-blur-sm">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-2xl text-brand-400 shadow-glow-sm ring-1 ring-brand-100">
+        {icon}
       </div>
-      <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-      {description && <p className="mt-1 max-w-sm text-sm text-slate-600">{description}</p>}
-      {action && <div className="mt-4">{action}</div>}
+      <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+      {description && (
+        <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-slate-500">{description}</p>
+      )}
+      {action && <div className="mt-5">{action}</div>}
     </div>
   );
 }
