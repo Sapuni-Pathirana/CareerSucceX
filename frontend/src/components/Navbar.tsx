@@ -234,7 +234,7 @@ export default function Navbar() {
         </div>
 
         <div className="hidden shrink-0 items-center justify-end md:flex">
-          {isAuthenticated && (
+          {isAuthenticated ? (
             <button
               type="button"
               onClick={() => logout()}
@@ -244,6 +244,15 @@ export default function Navbar() {
             >
               Sign out
             </button>
+          ) : (
+            <Link
+              to="/login"
+              className="whitespace-nowrap rounded-xl bg-aurora px-5 py-2.5 text-[13px] font-semibold text-white
+                         shadow-[0_2px_12px_rgba(99,102,241,0.35)] transition-all duration-200
+                         hover:shadow-[0_4px_20px_rgba(99,102,241,0.5)] hover:scale-[1.03] active:scale-[0.97]"
+            >
+              Sign in
+            </Link>
           )}
         </div>
 
@@ -303,7 +312,7 @@ export default function Navbar() {
               );
             })}
 
-            {isAuthenticated && (
+            {isAuthenticated ? (
               <button
                 type="button"
                 onClick={() => {
@@ -315,6 +324,15 @@ export default function Navbar() {
               >
                 Sign out
               </button>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setMenuOpen(false)}
+                className="mt-3 block w-full rounded-xl bg-aurora px-4 py-2.5 text-center text-sm font-semibold text-white shadow-aurora
+                           transition-all duration-200 hover:shadow-[0_4px_20px_rgba(99,102,241,0.5)] active:scale-[0.97]"
+              >
+                Sign in
+              </Link>
             )}
           </div>
         </div>

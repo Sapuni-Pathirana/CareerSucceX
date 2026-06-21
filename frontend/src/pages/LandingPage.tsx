@@ -93,7 +93,7 @@ export default function LandingPage() {
           </p>
 
           {/* CTA row */}
-          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center animate-fade-in animate-delay-300">
+          <div className="flex justify-center animate-fade-in animate-delay-300">
             <Link
               to="/register"
               className="rounded-2xl bg-aurora px-8 py-3.5 text-base font-semibold text-white
@@ -101,13 +101,6 @@ export default function LandingPage() {
                          hover:shadow-[0_8px_40px_rgba(99,102,241,0.6)] hover:scale-[1.04] active:scale-[0.97]"
             >
               Start for free →
-            </Link>
-            <Link
-              to="/login"
-              className="rounded-2xl border border-white/15 bg-white/5 px-8 py-3.5 text-base font-semibold text-white
-                         backdrop-blur-sm transition-all duration-300 hover:bg-white/10 hover:border-white/30"
-            >
-              Sign in
             </Link>
           </div>
 
