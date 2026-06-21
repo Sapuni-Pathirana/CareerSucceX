@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: careersuccex-backend
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+  datasource:
+    url: jdbc:postgresql://localhost:5432/careersuccex
+    username: careersuccex
+    password: careersuccex_secret
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+server:
+  port: 8080
+
+app:
+  jwt:
+    secret: change-me-to-a-long-random-secret-at-least-256-bits
+    access-expiration-ms: 900000
+    refresh-expiration-ms: 604800000
+  cors-origins: http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000
+  upload-dir: uploads
+  github:
+    client-id: ""
+    client-secret: ""
+    redirect-uri: http://localhost:8080/api/v1/github/callback
+  encryption-key: change-me-32-char-secret-key!!
+  ai-service-url: http://localhost:8000
+  rate-limit:
+    requests-per-minute: 100
+    cv-uploads-per-day: 5
+    github-refreshes-per-day: 3
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      aiService:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html

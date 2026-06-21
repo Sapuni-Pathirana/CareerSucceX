@@ -1,0 +1,30 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+app:
+  jwt:
+    secret: test-secret-key-at-least-256-bits-long-for-hmac-sha256
+    access-expiration-ms: 900000
+    refresh-expiration-ms: 604800000
+  cors-origins: http://localhost:5173
+  upload-dir: target/test-uploads
+  github:
+    client-id: test
+    client-secret: test
+    redirect-uri: http://localhost:8080/api/v1/github/callback
+  encryption-key: test-32-char-secret-key-here!!
+  ai-service-url: http://localhost:8000

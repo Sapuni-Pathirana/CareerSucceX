@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:900000}
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+  cors-origins: ${APP_CORS_ORIGINS:http://localhost:5173}
+  upload-dir: /app/uploads
+  github:
+    client-id: ${GITHUB_CLIENT_ID:}
+    client-secret: ${GITHUB_CLIENT_SECRET:}
+    redirect-uri: ${GITHUB_REDIRECT_URI}
+  encryption-key: ${ENCRYPTION_KEY}
+  ai-service-url: ${AI_SERVICE_URL:http://ai-service:8000}

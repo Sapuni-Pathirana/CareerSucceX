@@ -1,0 +1,40 @@
+# Build
+target/
+dist/
+build/
+*.class
+*.jar
+!**/gradle-wrapper.jar
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+
+# Node
+node_modules/
+frontend/dist/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Env & secrets
+.env
+.env.local
+*.pem
+
+# Uploads
+uploads/
+storage/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
