@@ -16,50 +16,57 @@ export default function CountUp({
   className = '',
 }: CountUpProps) {
   const [value, setValue] = useState(0);
-  const frameRef = useRef<number>(0);
-  const startRef = useRef<number | null>(null);
+  const [inView, setInView] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
-  const started = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
 
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true;
-          startRef.current = null;
-
-          const animate = (timestamp: number) => {
-            if (!startRef.current) startRef.current = timestamp;
-            const elapsed = timestamp - startRef.current;
-            const progress = Math.min(elapsed / duration, 1);
-            // Ease-out cubic
-            const eased = 1 - Math.pow(1 - progress, 3);
-            setValue(parseFloat((eased * target).toFixed(decimals)));
-            if (progress < 1) {
-              frameRef.current = requestAnimationFrame(animate);
-            } else {
-              setValue(target);
-            }
-          };
-
-          frameRef.current = requestAnimationFrame(animate);
-        }
-      },
-      { threshold: 0.3 },
+      ([entry]) => setInView(entry.isIntersecting),
+      { threshold: 0.35, rootMargin: '0px 0px -60px 0px' },
     );
 
     observer.observe(el);
-    return () => {
-      observer.disconnect();
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!inView) {
+      setValue(0);
+      return;
+    }
+
+    let frameId = 0;
+    let startTime: number | null = null;
+    let cancelled = false;
+
+    setValue(0);
+
+    const animate = (timestamp: number) => {
+      if (cancelled) return;
+      if (startTime === null) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(parseFloat((eased * target).toFixed(decimals)));
+      if (progress < 1) {
+        frameId = requestAnimationFrame(animate);
+      } else {
+        setValue(target);
+      }
     };
-  }, [target, duration, decimals]);
+
+    frameId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frameId);
+    };
+  }, [inView, target, duration, decimals]);
 
   return (
-    <span ref={ref} className={`animate-count-up tabular-nums ${className}`}>
+    <span ref={ref} className={`inline-block min-w-[2ch] tabular-nums ${className}`}>
       {decimals > 0 ? value.toFixed(decimals) : Math.round(value)}
       {suffix}
     </span>

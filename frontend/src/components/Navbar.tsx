@@ -42,34 +42,36 @@ function isGroupActive(pathname: string, items: NavLink[]) {
   return items.some((item) => isNavActive(pathname, item.to));
 }
 
-function navItemClass(active: boolean) {
-  return `relative inline-flex shrink-0 items-center whitespace-nowrap py-2 text-[13px] font-medium transition-colors duration-200 ${
-    active ? 'text-slate-900' : 'text-slate-600 hover:text-slate-900'
+function navLinkBase(active: boolean, open = false) {
+  const highlighted = active || open;
+  return `group relative inline-flex shrink-0 items-center whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-200 ${
+    highlighted
+      ? 'bg-brand-50 text-brand-700 font-semibold'
+      : 'text-slate-600 hover:bg-brand-50/80 hover:text-brand-700'
   }`;
 }
 
+function NavHighlight({ show }: { show: boolean }) {
+  return (
+    <span
+      className={`pointer-events-none absolute inset-x-2 bottom-0.5 h-[2px] rounded-full bg-gradient-to-r from-brand-400 via-purple-400 to-pink-400 transition-opacity duration-200 ${
+        show ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+      }`}
+    />
+  );
+}
 function navMetrics(scrollY: number) {
   // Short range + linear mapping = highly scroll-sensitive (responds within ~120px)
   const range = 120;
   const progress = Math.min(Math.max(scrollY / range, 0), 1);
-  const maxRem = 62;
-  const minRem = 52;
+  const maxRem = 70;
+  const minRem = 54;
   return {
     progress,
     maxWidth: maxRem - (maxRem - minRem) * progress,
     linkGap: 2.5 - 1.0 * progress,
     paddingX: 1.5 - 0.375 * progress,
   };
-}
-
-function ActiveIndicator({ show }: { show: boolean }) {
-  if (!show) return null;
-  return (
-    <>
-      <span className="pointer-events-none absolute inset-x-2 top-0 h-px bg-gradient-to-r from-brand-400 via-purple-400 to-pink-400" />
-      <span className="pointer-events-none absolute inset-x-2 bottom-0 h-px bg-gradient-to-r from-brand-400 via-purple-400 to-pink-400" />
-    </>
-  );
 }
 
 function NavDropdown({
@@ -94,12 +96,12 @@ function NavDropdown({
       <button
         type="button"
         onClick={() => (open ? onClose() : onOpen())}
-        className={`${navItemClass(active || open)} cursor-pointer border-0 bg-transparent`}
+        className={`${navLinkBase(active, open)} cursor-pointer border-0 bg-transparent`}
         aria-expanded={open}
         aria-haspopup="true"
       >
         {label}
-        <ActiveIndicator show={active} />
+        <NavHighlight show={active || open} />
       </button>
 
       {open && (
@@ -114,8 +116,8 @@ function NavDropdown({
                   onClick={onClose}
                   className={`block px-4 py-2.5 text-[13px] font-medium transition-colors
                     ${itemActive
-                      ? 'bg-brand-50 text-brand-700'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      ? 'border-l-2 border-brand-500 bg-brand-50 pl-[14px] text-brand-700'
+                      : 'border-l-2 border-transparent text-slate-600 hover:border-brand-300 hover:bg-brand-50/70 hover:pl-[14px] hover:text-brand-700'
                     }`}
                 >
                   {item.label}
@@ -181,11 +183,11 @@ export default function Navbar() {
           paddingLeft: `${metrics.paddingX}rem`,
           paddingRight: `${metrics.paddingX}rem`,
         }}
-        className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-white/20 bg-white/95 py-3
+        className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-3xl border border-white/20 bg-white/95 py-3
                    shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-xl will-change-[max-width] md:gap-4"
       >
-        <Link to={logoTo} className="flex shrink-0 items-center gap-2 group">
-          <div className="relative flex h-8 w-8 shrink-0 items-center justify-center">
+        <Link to={logoTo} className="flex shrink-0 items-center gap-2.5 group">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center">
             <svg viewBox="0 0 32 32" fill="none" className="h-full w-full">
               <circle cx="16" cy="16" r="13" stroke="url(#navGrad)" strokeWidth="2.5" fill="none" />
               <defs>
@@ -196,9 +198,9 @@ export default function Navbar() {
                 </linearGradient>
               </defs>
             </svg>
-            <span className="absolute text-[9px] font-black text-brand-700 leading-none">CS</span>
+            <span className="absolute text-[11px] font-black text-brand-700 leading-none">CS</span>
           </div>
-          <span className="hidden text-[15px] font-bold text-slate-900 transition-colors group-hover:text-brand-700 sm:inline">
+          <span className="hidden text-[17px] font-bold tracking-tight text-slate-900 transition-colors group-hover:text-brand-700 sm:inline">
             CareerSucceX
           </span>
         </Link>
@@ -212,9 +214,9 @@ export default function Navbar() {
             if (item.type === 'link') {
               const active = isNavActive(location.pathname, item.to);
               return (
-                <Link key={item.to} to={item.to} className={navItemClass(active)}>
+                <Link key={item.to} to={item.to} className={navLinkBase(active)}>
                   {item.label}
-                  <ActiveIndicator show={active} />
+                  <NavHighlight show={active} />
                 </Link>
               );
             }
@@ -269,7 +271,7 @@ export default function Navbar() {
       {/* Mobile — flat grouped list, no chevrons */}
       {menuOpen && (
         <div
-          className="absolute inset-x-4 top-[72px] max-h-[70vh] overflow-y-auto rounded-2xl border border-white/20 bg-white/98
+          className="absolute inset-x-4 top-[72px] max-h-[70vh] overflow-y-auto rounded-3xl border border-white/20 bg-white/98
                      p-4 shadow-[0_16px_48px_rgba(0,0,0,0.15)] backdrop-blur-xl animate-scale-in md:hidden"
         >
           <div className="flex flex-col gap-1">
@@ -282,7 +284,10 @@ export default function Navbar() {
                     to={item.to}
                     onClick={() => setMenuOpen(false)}
                     className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors
-                      ${active ? 'bg-brand-50 text-brand-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                      ${active
+                        ? 'bg-brand-50 text-brand-700 font-semibold'
+                        : 'text-slate-700 hover:bg-brand-50/80 hover:text-brand-700'
+                      }`}
                   >
                     {item.label}
                   </Link>
@@ -302,7 +307,10 @@ export default function Navbar() {
                         to={sub.to}
                         onClick={() => setMenuOpen(false)}
                         className={`block rounded-xl px-4 py-2 text-sm transition-colors
-                          ${active ? 'font-medium text-brand-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
+                          ${active
+                            ? 'bg-brand-50 font-semibold text-brand-700'
+                            : 'text-slate-600 hover:bg-brand-50/80 hover:text-brand-700'
+                          }`}
                       >
                         {sub.label}
                       </Link>

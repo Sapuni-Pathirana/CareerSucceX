@@ -57,7 +57,7 @@ export default function RegisterPage() {
             </div>
           </div>
           <h2 className="mb-2 text-center text-3xl font-extrabold text-white">Get Career Ready</h2>
-          <p className="mb-10 text-center text-sm text-indigo-300">Everything you need to land your internship</p>
+          <p className="mb-10 text-center text-sm text-indigo-300">Everything you need to land your next role</p>
 
           <div className="space-y-3">
             {features.map((f, i) => (
@@ -90,7 +90,7 @@ export default function RegisterPage() {
 
           <div className="card p-8 shadow-card">
             <h1 className="text-2xl font-bold text-slate-900">Create your account</h1>
-            <p className="mt-1 text-sm text-slate-500">Start building your internship readiness profile</p>
+            <p className="mt-1 text-sm text-slate-500">Start building your career readiness profile</p>
 
             {error && (
               <div className="mt-4">

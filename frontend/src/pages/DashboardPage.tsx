@@ -95,7 +95,7 @@ export default function DashboardPage() {
       {/* ── Hero header ─────────────────────────────── */}
       <PageHeader
         title={`Hello, ${firstName} 👋`}
-        description="Your internship readiness snapshot — updated in real time"
+        description="Your career readiness snapshot — updated in real time"
         badge="Live Dashboard"
       />
 

@@ -104,6 +104,14 @@ export default {
           '0%, 100%': { borderColor: 'rgba(99,102,241,0.3)' },
           '50%':       { borderColor: 'rgba(99,102,241,0.8)' },
         },
+        'hero-rise': {
+          from: { opacity: '0', transform: 'translateY(36px)', filter: 'blur(8px)' },
+          to:   { opacity: '1', transform: 'translateY(0)', filter: 'blur(0)' },
+        },
+        'hero-shimmer': {
+          from: { backgroundPosition: '0% center' },
+          to:   { backgroundPosition: '200% center' },
+        },
       },
       animation: {
         'fade-in':       'fade-in 0.5s ease-out both',
@@ -119,6 +127,8 @@ export default {
         'count-up':      'count-up 0.5s cubic-bezier(0.16,1,0.3,1) both',
         'progress-fill': 'progress-fill 1.2s cubic-bezier(0.16,1,0.3,1) both',
         'border-glow':   'border-glow 2s ease-in-out infinite',
+        'hero-rise':     'hero-rise 1s cubic-bezier(0.16,1,0.3,1) both',
+        'hero-shimmer':  'hero-shimmer 5s linear infinite',
       },
       transitionTimingFunction: {
         'spring': 'cubic-bezier(0.16, 1, 0.3, 1)',

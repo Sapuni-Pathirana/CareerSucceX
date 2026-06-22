@@ -137,7 +137,105 @@
   .animate-delay-500 { animation-delay: 500ms; }
   .animate-delay-600 { animation-delay: 600ms; }
   .animate-delay-700 { animation-delay: 700ms; }
+  .animate-delay-250 { animation-delay: 250ms; }
+  .animate-delay-350 { animation-delay: 350ms; }
+  .animate-delay-450 { animation-delay: 450ms; }
+  .animate-delay-550 { animation-delay: 550ms; }
+  .animate-delay-650 { animation-delay: 650ms; }
+  .animate-delay-750 { animation-delay: 750ms; }
   .animate-delay-800 { animation-delay: 800ms; }
+
+  .hero-caption-gradient {
+    @apply bg-gradient-to-r from-blue-400 via-purple-400 to-amber-400 bg-clip-text text-transparent;
+    background-size: 200% auto;
+  }
+
+  .section-title-badge {
+    @apply mb-5 inline-flex items-center gap-2.5 rounded-full bg-[#16122a] px-4 py-2 text-sm font-medium text-white ring-1 ring-white/[0.07];
+  }
+
+  .section-title-heading {
+    @apply text-[1.75rem] font-extrabold leading-[1.22] tracking-tight sm:text-4xl sm:whitespace-nowrap lg:text-[2.5rem];
+  }
+
+  .section-title-subtitle {
+    @apply text-sm leading-relaxed text-[#a099c0] sm:text-[15px];
+  }
+
+  .section-title-word {
+    @apply bg-clip-text text-transparent;
+    background-size: 200% auto;
+  }
+
+  .section-title-word--sky {
+    background-image: linear-gradient(135deg, #38bdf8 0%, #60a5fa 100%);
+  }
+
+  .section-title-word--violet {
+    background-image: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+  }
+
+  .section-title-word--pink {
+    background-image: linear-gradient(135deg, #c084fc 0%, #f472b6 100%);
+  }
+
+  .section-title-word--amber {
+    background-image: linear-gradient(135deg, #fb923c 0%, #fbbf24 100%);
+  }
+
+  .hero-subtitle {
+    @apply text-base text-slate-200/95 sm:text-lg;
+    line-height: 2rem;
+    text-shadow: 0 1px 28px rgba(0, 0, 0, 0.55);
+  }
+
+  @media (min-width: 640px) {
+    .hero-subtitle {
+      line-height: 2.25rem;
+    }
+  }
+
+  .hero-caption-item {
+    opacity: 0;
+    transform: translateY(40px);
+    filter: blur(6px);
+    transition:
+      opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+      filter 0.9s ease;
+  }
+
+  .hero-caption-item--visible {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+
+  @keyframes hero-caption-shimmer {
+    from { background-position: 0% center; }
+    to   { background-position: 200% center; }
+  }
+
+  .hero-caption-shimmer {
+    animation: hero-caption-shimmer 4.5s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-caption-item {
+      opacity: 1;
+      transform: none;
+      filter: none;
+      transition: none;
+    }
+
+    .hero-caption-shimmer {
+      animation: none;
+    }
+
+    .section-title-accent.hero-caption-shimmer {
+      animation: none;
+    }
+  }
 
   .text-gradient {
     @apply bg-aurora bg-clip-text text-transparent;
@@ -157,5 +255,37 @@
       linear-gradient(rgba(99,102,241,0.06) 1px, transparent 1px),
       linear-gradient(90deg, rgba(99,102,241,0.06) 1px, transparent 1px);
     background-size: 32px 32px;
+  }
+
+  /* EternaCloud-style film grain for landing hero */
+  .landing-hero-grain {
+    opacity: 0.22;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 180px 180px;
+  }
+
+  @keyframes landing-aurora-live {
+    0%, 100% { opacity: 0.78; }
+    50%       { opacity: 1; }
+  }
+
+  .landing-aurora-live {
+    animation: landing-aurora-live 10s ease-in-out infinite;
+  }
+
+  .landing-beam-hover path {
+    transition: fill 0.3s ease, opacity 0.3s ease;
+  }
+
+  .landing-beam-hover {
+    transition: filter 0.3s ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .landing-aurora-live {
+      animation: none !important;
+    }
   }
 }
