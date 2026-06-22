@@ -103,6 +103,197 @@
     @apply opacity-100 translate-y-0;
   }
 
+  /* ── Dashboard / app cards (landing dark style) ───── */
+  .dash-card {
+    @apply rounded-[22px] border border-white/[0.06] bg-[#241c3b] shadow-[0_12px_40px_rgba(0,0,0,0.25)];
+  }
+
+  .dash-badge {
+    @apply inline-flex items-center gap-2 rounded-full bg-white/[0.12] px-3 py-1.5 text-xs font-medium text-white ring-1 ring-white/[0.14] backdrop-blur-sm;
+  }
+
+  /* ── Dashboard stat cards (equal size, live border) ─ */
+  .dash-stat-card {
+    @apply relative flex h-full min-h-[168px] flex-col rounded-[22px] bg-[#241c3b] p-5 shadow-[0_12px_40px_rgba(0,0,0,0.22)];
+    isolation: isolate;
+  }
+
+  .dash-stat-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--dash-stat-ring);
+    animation: dashboard-hero-ring-spin 24s linear infinite;
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .dash-stat-card--blue {
+    --dash-stat-ring: conic-gradient(
+      from 0deg,
+      rgba(56, 189, 248, 0.06) 0deg,
+      rgba(56, 189, 248, 0.08) 52deg,
+      rgba(96, 165, 250, 0.42) 82deg,
+      rgba(125, 211, 252, 0.92) 92deg,
+      rgba(56, 189, 248, 0.45) 108deg,
+      rgba(56, 189, 248, 0.08) 148deg,
+      rgba(56, 189, 248, 0.05) 270deg,
+      rgba(56, 189, 248, 0.06) 360deg
+    );
+  }
+
+  .dash-stat-card--indigo {
+    --dash-stat-ring: conic-gradient(
+      from 0deg,
+      rgba(129, 140, 248, 0.06) 0deg,
+      rgba(129, 140, 248, 0.08) 52deg,
+      rgba(167, 139, 250, 0.42) 82deg,
+      rgba(196, 181, 253, 0.92) 92deg,
+      rgba(129, 140, 248, 0.45) 108deg,
+      rgba(129, 140, 248, 0.08) 148deg,
+      rgba(129, 140, 248, 0.05) 270deg,
+      rgba(129, 140, 248, 0.06) 360deg
+    );
+  }
+
+  .dash-stat-card--emerald {
+    --dash-stat-ring: conic-gradient(
+      from 0deg,
+      rgba(52, 211, 153, 0.06) 0deg,
+      rgba(52, 211, 153, 0.08) 52deg,
+      rgba(45, 212, 191, 0.42) 82deg,
+      rgba(110, 231, 183, 0.92) 92deg,
+      rgba(52, 211, 153, 0.45) 108deg,
+      rgba(52, 211, 153, 0.08) 148deg,
+      rgba(52, 211, 153, 0.05) 270deg,
+      rgba(52, 211, 153, 0.06) 360deg
+    );
+  }
+
+  .dash-stat-card--amber {
+    --dash-stat-ring: conic-gradient(
+      from 0deg,
+      rgba(251, 191, 36, 0.06) 0deg,
+      rgba(251, 191, 36, 0.08) 52deg,
+      rgba(251, 146, 60, 0.42) 82deg,
+      rgba(253, 224, 71, 0.92) 92deg,
+      rgba(251, 191, 36, 0.45) 108deg,
+      rgba(251, 191, 36, 0.08) 148deg,
+      rgba(251, 191, 36, 0.05) 270deg,
+      rgba(251, 191, 36, 0.06) 360deg
+    );
+  }
+
+  .dash-stat-card__accent {
+    @apply pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-[22px];
+  }
+
+  .dash-stat-card__body {
+    @apply relative z-10 flex h-full flex-col;
+  }
+
+  /* ── Dashboard hero ring (animated asymmetric bloom) ── */
+  .dashboard-hero-heading {
+    @apply text-[1.45rem] font-extrabold leading-[1.28] tracking-tight sm:text-[1.85rem];
+  }
+
+  .dashboard-hero-ring {
+    @apply pointer-events-none absolute rounded-full;
+    transform-origin: center center;
+    animation: dashboard-hero-ring-spin 22s linear infinite;
+  }
+
+  .dashboard-hero-ring--bloom {
+    inset: -1.5%;
+    background: conic-gradient(
+      from 0deg at 50% 50%,
+      rgba(79, 70, 229, 0.05) 0deg,
+      rgba(79, 70, 229, 0.04) 40deg,
+      rgba(99, 102, 241, 0.08) 52deg,
+      rgba(139, 92, 246, 0.22) 62deg,
+      rgba(168, 85, 247, 0.45) 72deg,
+      rgba(217, 70, 239, 0.78) 82deg,
+      rgba(232, 121, 249, 0.95) 95deg,
+      rgba(217, 70, 239, 0.88) 108deg,
+      rgba(168, 85, 247, 0.55) 118deg,
+      rgba(139, 92, 246, 0.28) 132deg,
+      rgba(99, 102, 241, 0.1) 148deg,
+      rgba(79, 70, 229, 0.06) 180deg,
+      rgba(67, 56, 202, 0.03) 235deg,
+      rgba(67, 56, 202, 0.025) 270deg,
+      rgba(79, 70, 229, 0.04) 310deg,
+      rgba(79, 70, 229, 0.05) 360deg
+    );
+    -webkit-mask: radial-gradient(
+      farthest-side,
+      transparent calc(100% - 42px),
+      #000 calc(100% - 10px),
+      #000 calc(100% - 2px),
+      transparent 100%
+    );
+    mask: radial-gradient(
+      farthest-side,
+      transparent calc(100% - 42px),
+      #000 calc(100% - 10px),
+      #000 calc(100% - 2px),
+      transparent 100%
+    );
+    filter: blur(7px);
+    opacity: 0.92;
+  }
+
+  .dashboard-hero-ring--edge {
+    inset: 0;
+    background: conic-gradient(
+      from 0deg at 50% 50%,
+      rgba(99, 102, 241, 0.07) 0deg,
+      rgba(99, 102, 241, 0.06) 48deg,
+      rgba(139, 92, 246, 0.12) 58deg,
+      rgba(168, 85, 247, 0.28) 68deg,
+      rgba(217, 70, 239, 0.58) 78deg,
+      rgba(232, 121, 249, 0.9) 92deg,
+      rgba(217, 70, 239, 0.72) 106deg,
+      rgba(168, 85, 247, 0.38) 118deg,
+      rgba(139, 92, 246, 0.16) 135deg,
+      rgba(99, 102, 241, 0.07) 155deg,
+      rgba(99, 102, 241, 0.07) 180deg,
+      rgba(79, 70, 229, 0.04) 250deg,
+      rgba(79, 70, 229, 0.035) 270deg,
+      rgba(99, 102, 241, 0.06) 330deg,
+      rgba(99, 102, 241, 0.07) 360deg
+    );
+    -webkit-mask: radial-gradient(
+      farthest-side,
+      transparent calc(100% - 3.5px),
+      #000 calc(100% - 1.2px),
+      #000 calc(100% - 0.4px),
+      transparent 100%
+    );
+    mask: radial-gradient(
+      farthest-side,
+      transparent calc(100% - 3.5px),
+      #000 calc(100% - 1.2px),
+      #000 calc(100% - 0.4px),
+      transparent 100%
+    );
+  }
+
+  /* ── Dark input (auth pages) ──────────────────────── */
+  .input-dark {
+    @apply w-full rounded-xl border border-white/[0.08] bg-[#1a1528] px-4 py-2.5 text-sm text-white
+           placeholder:text-[#6b6580] transition-all duration-200
+           focus:border-[#8b5cf6]/45 focus:outline-none focus:ring-2 focus:ring-[#8b5cf6]/20;
+  }
+
   /* ── Shimmer loading skeleton ───────────────────────── */
   .skeleton {
     @apply animate-pulse rounded-lg bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 bg-[length:200%_100%];
@@ -216,6 +407,11 @@
     to   { background-position: 200% center; }
   }
 
+  @keyframes dashboard-hero-ring-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
   .hero-caption-shimmer {
     animation: hero-caption-shimmer 4.5s linear infinite;
   }
@@ -229,6 +425,14 @@
     }
 
     .hero-caption-shimmer {
+      animation: none;
+    }
+
+    .dashboard-hero-ring {
+      animation: none;
+    }
+
+    .dash-stat-card::before {
       animation: none;
     }
 

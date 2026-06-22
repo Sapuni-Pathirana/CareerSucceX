@@ -17,7 +17,7 @@ export default function LoadingSpinner({ size = 'md', label }: LoadingSpinnerPro
         role="status"
         aria-label="Loading"
       />
-      {label && <p className="text-sm font-medium text-slate-500 animate-pulse">{label}</p>}
+      {label && <p className="text-sm font-medium text-[#a099c0] animate-pulse">{label}</p>}
     </div>
   );
 }

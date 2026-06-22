@@ -1,27 +1,43 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 interface ScoreGaugeProps {
   score: number;
   label?: string;
   size?: number;
+  theme?: 'light' | 'dark';
+  variant?: 'default' | 'hero';
 }
 
-export default function ScoreGauge({ score, label, size = 160 }: ScoreGaugeProps) {
+function scoreColor(value: number, variant: 'default' | 'hero') {
+  if (value >= 75) return variant === 'hero' ? '#34d399' : '#10b981';
+  if (value >= 50) return '#6366f1';
+  if (value >= 25) return variant === 'hero' ? '#f9a007' : '#f59e0b';
+  return '#ef4444';
+}
+
+export default function ScoreGauge({
+  score,
+  label,
+  size = 160,
+  theme = 'light',
+  variant = 'default',
+}: ScoreGaugeProps) {
   const [displayed, setDisplayed] = useState(0);
   const ref = useRef<SVGSVGElement>(null);
   const started = useRef(false);
+  const isDark = theme === 'dark';
+  const uid = useId().replace(/:/g, '');
 
   const radius = 58;
   const circumference = 2 * Math.PI * radius;
   const clamped = Math.min(100, Math.max(0, displayed));
   const offset = circumference - (clamped / 100) * circumference;
+  const color = scoreColor(clamped, variant);
+  const useGradient = clamped >= 50 && variant === 'default';
 
-  const color =
-    clamped >= 75 ? '#10b981' :
-    clamped >= 50 ? '#6366f1' :
-    clamped >= 25 ? '#f59e0b' : '#ef4444';
-
-  const gradId = `gauge-${label?.replace(/\s/g, '') ?? 'default'}`;
+  const gradId = `${uid}-grad`;
+  const glowId = `${uid}-glow`;
+  const strokeWidth = variant === 'hero' ? 11 : 10;
 
   useEffect(() => {
     const el = ref.current;
@@ -56,12 +72,12 @@ export default function ScoreGauge({ score, label, size = 160 }: ScoreGaugeProps
       <svg ref={ref} width={size} height={size} viewBox="0 0 130 130">
         <defs>
           <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%"   stopColor="#6366f1" />
-            <stop offset="50%"  stopColor="#8b5cf6" />
+            <stop offset="0%" stopColor="#6366f1" />
+            <stop offset="50%" stopColor="#8b5cf6" />
             <stop offset="100%" stopColor="#ec4899" />
           </linearGradient>
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="3" result="blur" />
+          <filter id={glowId} x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation={variant === 'hero' ? 4 : 3} result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
@@ -69,41 +85,47 @@ export default function ScoreGauge({ score, label, size = 160 }: ScoreGaugeProps
           </filter>
         </defs>
 
-        {/* Track */}
-        <circle cx="65" cy="65" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="10" />
-
-        {/* Progress */}
         <circle
           cx="65"
           cy="65"
           r={radius}
           fill="none"
-          stroke={clamped >= 50 ? `url(#${gradId})` : color}
-          strokeWidth="10"
+          stroke={isDark ? 'rgba(255,255,255,0.07)' : '#e2e8f0'}
+          strokeWidth={strokeWidth}
+        />
+
+        <circle
+          cx="65"
+          cy="65"
+          r={radius}
+          fill="none"
+          stroke={useGradient ? `url(#${gradId})` : color}
+          strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           transform="rotate(-90 65 65)"
-          filter="url(#glow)"
+          filter={`url(#${glowId})`}
           style={{ transition: 'stroke-dashoffset 0.05s linear' }}
         />
 
-        {/* Score */}
         <text
-          x="65" y="62"
+          x="65"
+          y={variant === 'hero' ? 60 : 62}
           textAnchor="middle"
-          fontSize="26"
+          fontSize={variant === 'hero' ? 32 : 28}
           fontWeight="800"
-          fill="#1e1b4b"
+          fill={isDark ? '#ffffff' : '#1e1b4b'}
           fontFamily="Inter, sans-serif"
         >
           {Math.round(clamped)}
         </text>
         <text
-          x="65" y="80"
+          x="65"
+          y={variant === 'hero' ? 82 : 80}
           textAnchor="middle"
-          fontSize="11"
-          fill="#94a3b8"
+          fontSize={variant === 'hero' ? 12 : 11}
+          fill={isDark ? '#8b83a8' : '#94a3b8'}
           fontFamily="Inter, sans-serif"
         >
           / 100
@@ -111,7 +133,9 @@ export default function ScoreGauge({ score, label, size = 160 }: ScoreGaugeProps
       </svg>
 
       {label && (
-        <p className="text-sm font-semibold text-slate-600 tracking-wide">{label}</p>
+        <p className={`text-sm font-semibold tracking-wide ${isDark ? 'text-white/90' : 'text-slate-600'}`}>
+          {label}
+        </p>
       )}
     </div>
   );
