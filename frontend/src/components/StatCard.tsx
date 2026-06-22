@@ -19,13 +19,13 @@ const accentMap: Record<string, { bg: string; text: string; ring: string; icon: 
   purple:  { bg: 'from-purple-500 to-purple-700',  text: 'text-purple-600',  ring: 'ring-purple-100',  icon: 'bg-purple-50' },
 };
 
-const darkAccentMap: Record<string, { bg: string; text: string; ring: string; icon: string; live: string }> = {
-  indigo:  { bg: 'from-indigo-400 to-violet-400',   text: 'text-indigo-300',   ring: 'ring-white/10', icon: 'bg-white/10', live: 'dash-stat-card--indigo' },
-  blue:    { bg: 'from-sky-400 to-blue-400',        text: 'text-sky-300',      ring: 'ring-white/10', icon: 'bg-white/10', live: 'dash-stat-card--blue' },
-  emerald: { bg: 'from-emerald-400 to-teal-400',    text: 'text-emerald-300',  ring: 'ring-white/10', icon: 'bg-white/10', live: 'dash-stat-card--emerald' },
-  amber:   { bg: 'from-amber-400 to-orange-400',    text: 'text-amber-300',    ring: 'ring-white/10', icon: 'bg-white/10', live: 'dash-stat-card--amber' },
-  rose:    { bg: 'from-rose-400 to-pink-400',       text: 'text-rose-300',     ring: 'ring-white/10', icon: 'bg-white/10', live: 'dash-stat-card--indigo' },
-  purple:  { bg: 'from-purple-400 to-fuchsia-400', text: 'text-purple-300',   ring: 'ring-white/10', icon: 'bg-white/10', live: 'dash-stat-card--indigo' },
+const darkAccentMap: Record<string, { bg: string }> = {
+  indigo:  { bg: 'from-indigo-300 to-violet-300' },
+  blue:    { bg: 'from-sky-300 to-blue-300' },
+  emerald: { bg: 'from-emerald-300 to-teal-300' },
+  amber:   { bg: 'from-amber-300 to-orange-300' },
+  rose:    { bg: 'from-rose-300 to-pink-300' },
+  purple:  { bg: 'from-purple-300 to-fuchsia-300' },
 };
 
 export default function StatCard({
@@ -43,56 +43,46 @@ export default function StatCard({
   const isNumeric = !isNaN(numeric) && value !== '—';
 
   if (isDark) {
-    const liveClass = 'live' in a ? a.live : 'dash-stat-card--indigo';
-
     return (
       <div
-        className={`dash-stat-card ${liveClass} animate-fade-in`}
+        className="dash-stat-card animate-fade-in"
         style={{ animationDelay: `${delay}ms` }}
       >
-        <div className={`dash-stat-card__accent bg-gradient-to-r ${a.bg}`} aria-hidden />
-        <div className="dash-stat-card__body">
-          {icon && (
-            <div
-              className={`mb-3 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg ring-1 ${a.icon} ${a.ring} text-white/90`}
-            >
-              {icon}
-            </div>
+        {icon && <div className="dash-stat-card__icon">{icon}</div>}
+
+        <div className={`dash-stat-card__value bg-gradient-to-r bg-clip-text text-transparent ${a.bg}`}>
+          {isNumeric ? (
+            <CountUp target={numeric} decimals={value.toString().includes('.') ? 1 : 0} />
+          ) : (
+            <span>{value}</span>
           )}
-          <p className="min-h-[2rem] text-xs font-semibold uppercase leading-snug tracking-widest text-[#a099c0]">
-            {label}
-          </p>
-          <div className={`mt-2 bg-gradient-to-r bg-clip-text text-4xl font-extrabold leading-none text-transparent ${a.bg}`}>
-            {isNumeric ? (
-              <CountUp target={numeric} decimals={value.toString().includes('.') ? 1 : 0} />
-            ) : (
-              <span>{value}</span>
-            )}
-          </div>
-          <p className="mt-auto min-h-[1.25rem] pt-2 text-xs text-[#8b83a8]">{subtext ?? '\u00A0'}</p>
         </div>
+
+        <p className="dash-stat-card__label">{label}</p>
+        <p className="dash-stat-card__subtext">{subtext ?? '\u00A0'}</p>
       </div>
     );
   }
 
+  const light = accentMap[accent];
   return (
     <div
       className="group relative overflow-hidden p-5 animate-fade-in card-hover"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="absolute inset-0 bg-aurora-card opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-      <div className={`absolute inset-x-0 top-0 h-0.5 rounded-t-[22px] bg-gradient-to-r ${a.bg}`} />
+      <div className={`absolute inset-x-0 top-0 h-0.5 rounded-t-[22px] bg-gradient-to-r ${light.bg}`} />
 
       <div className="relative">
         {icon && (
           <div
-            className={`mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl text-lg ring-1 ${a.icon} ${a.ring}`}
+            className={`mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl text-lg ring-1 ${light.icon} ${light.ring}`}
           >
             {icon}
           </div>
         )}
         <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">{label}</p>
-        <div className={`mt-2 bg-gradient-to-r bg-clip-text text-4xl font-extrabold text-transparent ${a.bg}`}>
+        <div className={`mt-2 bg-gradient-to-r bg-clip-text text-4xl font-extrabold text-transparent ${light.bg}`}>
           {isNumeric ? (
             <CountUp target={numeric} decimals={value.toString().includes('.') ? 1 : 0} />
           ) : (

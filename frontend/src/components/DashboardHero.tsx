@@ -17,6 +17,19 @@ function ChartBadgeIcon() {
   );
 }
 
+function DashboardHeroAmbient() {
+  return (
+    <div className="dashboard-hero-ambient" aria-hidden>
+      <div className="dashboard-hero-ambient__blob dashboard-hero-ambient__blob--indigo" />
+      <div className="dashboard-hero-ambient__blob dashboard-hero-ambient__blob--violet" />
+      <div className="dashboard-hero-ambient__blob dashboard-hero-ambient__blob--amber" />
+      <div className="dashboard-hero-ambient__blob dashboard-hero-ambient__blob--rose" />
+      <div className="dashboard-hero-ambient__vignette" />
+      <div className="dashboard-hero-ambient__grain" />
+    </div>
+  );
+}
+
 function DashboardHeroRing() {
   return (
     <div className="pointer-events-none absolute inset-0" aria-hidden>
@@ -34,8 +47,12 @@ export default function DashboardHero({
   updatedAt,
 }: DashboardHeroProps) {
   return (
-    <section className="dashboard-hero relative mb-10 px-2 py-4 sm:px-4 sm:py-6">
-      <div className="relative z-10 mx-auto flex justify-center">
+    <section className="dashboard-hero relative left-1/2 mb-10 w-screen max-w-none -translate-x-1/2 py-8 sm:py-10">
+      <div className="pointer-events-none absolute inset-0 -bottom-10 sm:-bottom-12">
+        <DashboardHeroAmbient />
+      </div>
+
+      <div className="relative z-10 mx-auto flex justify-center px-4 sm:px-6">
         <div className="relative aspect-square w-full max-w-[min(96vw,540px)]">
           <DashboardHeroRing />
 

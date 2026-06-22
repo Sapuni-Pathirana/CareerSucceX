@@ -5,15 +5,17 @@ import {
 } from 'recharts';
 import { profileApi } from '../api/profile';
 import { readinessApi } from '../api/readiness';
+import { verificationsApi } from '../api/verifications';
 import { getErrorMessage } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import CountUp from '../components/CountUp';
 import DashboardHero from '../components/DashboardHero';
+import DashboardStatPanel from '../components/DashboardStatPanel';
+import { StatIconCv, StatIconGithub, StatIconInterview, StatIconSkills } from '../components/DashboardStatIcons';
+import VerifiedAiTestsSection from '../components/VerifiedAiTestsSection';
 import ErrorAlert from '../components/ErrorAlert';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ScrollReveal from '../components/ScrollReveal';
-import StatCard from '../components/StatCard';
-import type { DashboardResponse, ReadinessHistoryPoint, ReadinessScore } from '../types';
+import type { DashboardResponse, ReadinessHistoryPoint, ReadinessScore, VerificationBadge } from '../types';
 
 const activityIcons: Record<string, string> = {
   CV_ANALYSIS:        '◉',
@@ -38,6 +40,7 @@ export default function DashboardPage() {
   const [score, setScore] = useState<ReadinessScore | null>(null);
   const [history, setHistory] = useState<ReadinessHistoryPoint[]>([]);
   const [recs, setRecs] = useState<string[]>([]);
+  const [verifiedBadges, setVerifiedBadges] = useState<VerificationBadge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -46,16 +49,18 @@ export default function DashboardPage() {
       setLoading(true);
       setError('');
       try {
-        const [dash, s, hist, r] = await Promise.all([
+        const [dash, s, hist, r, badges] = await Promise.all([
           profileApi.getDashboard(),
           readinessApi.getScore().catch(() => null),
           readinessApi.getHistory().catch(() => []),
           readinessApi.getRecommendations().catch(() => []),
+          verificationsApi.getBadges().catch(() => []),
         ]);
         setDashboard(dash);
         setScore(s);
         setHistory(hist);
         setRecs(r);
+        setVerifiedBadges(badges);
       } catch (err) {
         setError(getErrorMessage(err));
       } finally {
@@ -111,55 +116,55 @@ export default function DashboardPage() {
 
       {error && <ErrorAlert message={error} theme="dark" />}
 
-      <div className="grid items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <ScrollReveal delay={80} className="h-full">
-          <StatCard theme="dark" label="CV / ATS Score" value={fmt(dashboard?.cvScore)} accent="blue" icon="◉" delay={80} />
-        </ScrollReveal>
-        <ScrollReveal delay={160} className="h-full">
-          <StatCard theme="dark" label="GitHub Score" value={fmt(dashboard?.githubScore)} accent="indigo" icon="⬡" delay={160} />
-        </ScrollReveal>
-        <ScrollReveal delay={240} className="h-full">
-          <StatCard theme="dark" label="Interview Score" value={fmt(dashboard?.interviewScore)} accent="emerald" icon="◎" delay={240} />
-        </ScrollReveal>
-        <ScrollReveal delay={320} className="h-full">
-          <StatCard theme="dark" label="Open Skill Gaps" value={dashboard?.skillGapCount ?? 0} accent="amber" icon="⬟" subtext="to address" delay={320} />
-        </ScrollReveal>
-      </div>
+      <ScrollReveal delay={60}>
+        <DashboardStatPanel
+          items={[
+            {
+              icon: <StatIconCv />,
+              label: 'CV / ATS Score',
+              description: 'Recruiter and ATS screening readiness',
+              value: fmt(dashboard?.cvScore),
+              delay: 80,
+            },
+            {
+              icon: <StatIconGithub />,
+              label: 'GitHub Score',
+              description: 'Portfolio strength from your repositories',
+              value: fmt(dashboard?.githubScore),
+              delay: 140,
+            },
+            {
+              icon: <StatIconInterview />,
+              label: 'Interview Score',
+              description: 'Performance from AI mock interviews',
+              value: fmt(dashboard?.interviewScore),
+              delay: 200,
+            },
+            {
+              icon: <StatIconSkills />,
+              label: 'Open Skill Gaps',
+              description: 'Skills to address in your learning plan',
+              value: dashboard?.skillGapCount ?? 0,
+              delay: 260,
+            },
+          ]}
+        />
+      </ScrollReveal>
 
-      {(dashboard?.verifiedSkillsCount ?? 0) > 0 && (
-        <ScrollReveal>
-          <div className="rounded-[22px] bg-aurora p-px shadow-aurora">
-            <div className="flex flex-col items-start gap-4 rounded-[22px] bg-[#241c3b] px-6 py-5 sm:flex-row sm:items-center">
-              <div className="text-4xl font-extrabold text-gradient">
-                <CountUp target={dashboard!.verifiedSkillsCount} />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-white">Verified Skills</p>
-                <p className="text-sm text-[#a099c0]">Backed by AI quiz badges</p>
-              </div>
-              <div className="hidden sm:block">
-                <div className="flex gap-1">
-                  {Array.from({ length: Math.min(dashboard!.verifiedSkillsCount, 8) }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-8 w-2 rounded-full bg-aurora"
-                      style={{ opacity: 0.4 + (i / 8) * 0.6 }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+      {verifiedBadges.length > 0 && (
+        <ScrollReveal delay={80}>
+          <VerifiedAiTestsSection badges={verifiedBadges} />
         </ScrollReveal>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid items-stretch gap-6 lg:grid-cols-2">
         {histData.length > 0 && (
-          <ScrollReveal delay={100}>
-            <div className="dash-card p-6">
+          <ScrollReveal delay={100} className="h-full">
+            <div className="dash-card dash-panel-card dash-panel-card--chart p-6">
               <h2 className="mb-1 text-base font-semibold text-white">Score History</h2>
               <p className="mb-4 text-xs text-[#a099c0]">Your readiness over time</p>
-              <ResponsiveContainer width="100%" height={220}>
+              <div className="dash-panel-card__chart">
+                <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={histData}>
                   <defs>
                     <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
@@ -171,19 +176,21 @@ export default function DashboardPage() {
                   <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#a099c0' }} axisLine={false} tickLine={false} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#a099c0' }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={chartTooltipStyle} />
-                  <Area type="monotone" dataKey="score" stroke="#818cf8" fill="url(#areaGrad)" strokeWidth={2.5} dot={{ fill: '#a78bfa', r: 3 }} />
+                  <Area type="monotone" dataKey="score" stroke="#818cf8" fill="url(#areaGrad)" strokeWidth={2.5} dot={{ fill: '#a78bfa', r: 3 }} isAnimationActive animationDuration={900} />
                 </AreaChart>
               </ResponsiveContainer>
+              </div>
             </div>
           </ScrollReveal>
         )}
 
         {bData.length > 0 && (
-          <ScrollReveal delay={200}>
-            <div className="dash-card p-6">
+          <ScrollReveal delay={200} className="h-full">
+            <div className="dash-card dash-panel-card dash-panel-card--chart p-6">
               <h2 className="mb-1 text-base font-semibold text-white">Sub-scores</h2>
               <p className="mb-4 text-xs text-[#a099c0]">Breakdown by category</p>
-              <ResponsiveContainer width="100%" height={220}>
+              <div className="dash-panel-card__chart">
+                <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={bData} layout="vertical">
                   <defs>
                     <linearGradient id="barGrad" x1="0" y1="0" x2="1" y2="0">
@@ -195,18 +202,20 @@ export default function DashboardPage() {
                   <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: '#a099c0' }} axisLine={false} tickLine={false} />
                   <YAxis type="category" dataKey="name" width={95} tick={{ fontSize: 11, fill: '#a099c0' }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={chartTooltipStyle} />
-                  <Bar dataKey="value" fill="url(#barGrad)" radius={[0, 6, 6, 0]} />
+                  <Bar dataKey="value" fill="url(#barGrad)" radius={[0, 6, 6, 0]} isAnimationActive animationDuration={900} />
                 </BarChart>
               </ResponsiveContainer>
+              </div>
             </div>
           </ScrollReveal>
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <ScrollReveal delay={100}>
-          <div className="dash-card p-6">
+      <div className="grid items-stretch gap-6 lg:grid-cols-2">
+        <ScrollReveal delay={300} className="h-full">
+          <div className="dash-card dash-panel-card p-6">
             <h2 className="mb-4 text-base font-semibold text-white">Recommendations</h2>
+            <div className="dash-panel-card__body">
             {recs.length === 0 ? (
               <p className="text-sm text-[#a099c0]">
                 Complete CV analysis, connect GitHub, and take a mock interview for personalised tips.
@@ -214,7 +223,7 @@ export default function DashboardPage() {
             ) : (
               <ul className="space-y-3">
                 {recs.map((rec, i) => (
-                  <li key={i} className="flex gap-3 text-sm text-white/90 animate-fade-in" style={{ animationDelay: `${i * 80}ms` }}>
+                  <li key={i} className="dash-stagger-item flex gap-3 text-sm text-white/90">
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-aurora text-[10px] font-bold text-white">
                       {i + 1}
                     </span>
@@ -223,19 +232,20 @@ export default function DashboardPage() {
                 ))}
               </ul>
             )}
+            </div>
           </div>
         </ScrollReveal>
 
-        <ScrollReveal delay={200}>
-          <div className="dash-card p-6">
+        <ScrollReveal delay={400} className="h-full">
+          <div className="dash-card dash-panel-card p-6">
             <h2 className="mb-4 text-base font-semibold text-white">Recent Activity</h2>
+            <div className="dash-panel-card__body">
             {dashboard?.recentActivity?.length ? (
-              <ul className="divide-y divide-white/[0.06]">
+              <ul className="flex flex-1 flex-col divide-y divide-white/[0.06]">
                 {dashboard.recentActivity.map((item, i) => (
                   <li
                     key={i}
-                    className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 animate-fade-in"
-                    style={{ animationDelay: `${i * 60}ms` }}
+                    className="dash-stagger-item flex items-center gap-3 py-3 first:pt-0 last:pb-0"
                   >
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/10 text-sm text-[#c4b5fd] ring-1 ring-white/10">
                       {activityIcons[item.type] ?? '●'}
@@ -255,6 +265,7 @@ export default function DashboardPage() {
             ) : (
               <p className="text-sm text-[#a099c0]">No activity yet — start by uploading your CV.</p>
             )}
+            </div>
           </div>
         </ScrollReveal>
       </div>

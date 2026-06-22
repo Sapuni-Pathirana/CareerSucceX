@@ -11,7 +11,7 @@ interface ScoreGaugeProps {
 function scoreColor(value: number, variant: 'default' | 'hero') {
   if (value >= 75) return variant === 'hero' ? '#34d399' : '#10b981';
   if (value >= 50) return '#6366f1';
-  if (value >= 25) return variant === 'hero' ? '#f9a007' : '#f59e0b';
+  if (value >= 25) return variant === 'hero' ? '#f97316' : '#f59e0b';
   return '#ef4444';
 }
 
@@ -37,7 +37,9 @@ export default function ScoreGauge({
 
   const gradId = `${uid}-grad`;
   const glowId = `${uid}-glow`;
-  const strokeWidth = variant === 'hero' ? 11 : 10;
+  const softGlowId = `${uid}-soft-glow`;
+  const strokeWidth = variant === 'hero' ? 12 : 10;
+  const isHero = variant === 'hero';
 
   useEffect(() => {
     const el = ref.current;
@@ -77,11 +79,14 @@ export default function ScoreGauge({
             <stop offset="100%" stopColor="#ec4899" />
           </linearGradient>
           <filter id={glowId} x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation={variant === 'hero' ? 4 : 3} result="blur" />
+            <feGaussianBlur stdDeviation="3" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
+          </filter>
+          <filter id={softGlowId} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.5" />
           </filter>
         </defs>
 
@@ -90,9 +95,26 @@ export default function ScoreGauge({
           cy="65"
           r={radius}
           fill="none"
-          stroke={isDark ? 'rgba(255,255,255,0.07)' : '#e2e8f0'}
+          stroke={isDark ? (isHero ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.07)') : '#e2e8f0'}
           strokeWidth={strokeWidth}
         />
+
+        {isHero && (
+          <circle
+            cx="65"
+            cy="65"
+            r={radius}
+            fill="none"
+            stroke={color}
+            strokeWidth={strokeWidth + 3}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            transform="rotate(-90 65 65)"
+            filter={`url(#${softGlowId})`}
+            opacity={0.35}
+          />
+        )}
 
         <circle
           cx="65"
@@ -105,7 +127,7 @@ export default function ScoreGauge({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           transform="rotate(-90 65 65)"
-          filter={`url(#${glowId})`}
+          filter={isHero ? undefined : `url(#${glowId})`}
           style={{ transition: 'stroke-dashoffset 0.05s linear' }}
         />
 
