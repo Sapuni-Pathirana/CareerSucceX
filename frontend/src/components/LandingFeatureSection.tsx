@@ -54,9 +54,9 @@ function ellipseOrbitPath(rx: number, ry: number, cx = ARC_CX, cy = ARC_CY, reve
 
 /** Dots on distinct arc rings — staggered speed, direction, and size */
 const ORBITAL_DOTS = [
-  { arcIndex: 1, dur: '14s', begin: '0s', reverse: true, size: 'sm' as const },
-  { arcIndex: 3, dur: '17s', begin: '2.5s', size: 'sm' as const },
-  { arcIndex: 5, dur: '20s', begin: '1s', reverse: true },
+  { arcIndex: 1, dur: '14s', reverse: true, size: 'sm' as const },
+  { arcIndex: 3, dur: '17s', size: 'sm' as const },
+  { arcIndex: 5, dur: '20s', reverse: true },
 ];
 
 function ArcEllipses({ range }: { range: [number, number] }) {
@@ -94,11 +94,11 @@ function ArcEllipses({ range }: { range: [number, number] }) {
 type OrbitalDotProps = {
   arcIndex: number;
   dur: string;
-  begin?: string;
   reverse?: boolean;
   size?: 'sm' | 'md';
   active: boolean;
   reducedMotion: boolean;
+  phaseOffset?: number;
 };
 
 const DOT_SIZES = {
@@ -110,17 +110,15 @@ const DOT_SIZES = {
 function FeatureOrbitalDot({
   arcIndex,
   dur,
-  begin = '0s',
   reverse = false,
   size = 'md',
   active,
   reducedMotion,
+  phaseOffset = 0,
 }: OrbitalDotProps) {
-  if (!active) return null;
-
   const { rx, ry, rot } = arcGeometry(arcIndex);
   const path = ellipseOrbitPath(rx, ry, ARC_CX, ARC_CY, reverse);
-  const shouldAnimate = !reducedMotion;
+  const shouldAnimate = active && !reducedMotion;
   const dot = DOT_SIZES[size];
   const staticX = ARC_CX + rx * (reverse ? -0.65 : 0.72);
   const staticY = ARC_CY - ry * 0.35;
@@ -129,7 +127,13 @@ function FeatureOrbitalDot({
     <g transform={`rotate(${rot} ${ARC_CX} ${ARC_CY})`}>
       <g transform={shouldAnimate ? undefined : `translate(${staticX} ${staticY})`}>
         {shouldAnimate ? (
-          <animateMotion dur={dur} begin={begin} repeatCount="indefinite" path={path} />
+          <animateMotion
+            key="orbit"
+            dur={dur}
+            begin={`${phaseOffset}s`}
+            repeatCount="indefinite"
+            path={path}
+          />
         ) : null}
         <circle r={dot.halo} fill="url(#feature-dot-glow)" opacity="0.55" />
         <circle r={dot.core} fill="url(#feature-dot-core)" filter="url(#feature-dot-glow-filter)" />
@@ -137,6 +141,12 @@ function FeatureOrbitalDot({
       </g>
     </g>
   );
+}
+
+function isFeatureSectionVisible(el: HTMLElement) {
+  const rect = el.getBoundingClientRect();
+  const viewport = window.innerHeight;
+  return rect.top < viewport * 0.92 && rect.bottom > viewport * 0.06;
 }
 
 function FeatureArcBackground() {
@@ -155,17 +165,35 @@ function FeatureArcBackground() {
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setInView(true);
-          observer.unobserve(el);
-        }
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -8% 0px' },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
+
+    const activateIfVisible = () => {
+      if (isFeatureSectionVisible(el)) {
+        setInView(true);
+        return true;
+      }
+      return false;
+    };
+
+    let observer: IntersectionObserver | null = null;
+    const rafId = requestAnimationFrame(() => {
+      if (activateIfVisible()) return;
+
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setInView(true);
+            observer?.disconnect();
+          }
+        },
+        { threshold: 0.02, rootMargin: '18% 0px -2% 0px' },
+      );
+      observer.observe(el);
+    });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      observer?.disconnect();
+    };
   }, []);
 
   return (
@@ -226,16 +254,16 @@ function FeatureArcBackground() {
           <ArcEllipses range={[0, ARC_COUNT - 1]} />
         </g>
 
-        {ORBITAL_DOTS.map((dot) => (
+        {ORBITAL_DOTS.map((dot, i) => (
           <FeatureOrbitalDot
             key={dot.arcIndex}
             arcIndex={dot.arcIndex}
             dur={dot.dur}
-            begin={dot.begin}
             reverse={dot.reverse}
             size={dot.size}
             active={inView}
             reducedMotion={reducedMotion}
+            phaseOffset={i * 0.2}
           />
         ))}
       </svg>

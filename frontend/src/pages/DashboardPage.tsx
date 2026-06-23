@@ -13,10 +13,9 @@ import {
 import { profileApi } from '../api/profile';
 import { readinessApi } from '../api/readiness';
 import { getErrorMessage } from '../api/client';
-import { useAuth } from '../context/AuthContext';
+import ErrorAlert from '../components/ErrorAlert';
 import AnalyticsMetricIcon from '../components/AnalyticsMetricIcon';
 import EarningsGauge from '../components/EarningsGauge';
-import ErrorAlert from '../components/ErrorAlert';
 import LoadingSpinner from '../components/LoadingSpinner';
 import type { DashboardResponse, ReadinessHistoryPoint, ReadinessScore } from '../types';
 
@@ -51,11 +50,9 @@ function readinessStatus(overall: number) {
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth();
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [score, setScore] = useState<ReadinessScore | null>(null);
   const [history, setHistory] = useState<ReadinessHistoryPoint[]>([]);
-  const [recs, setRecs] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -64,16 +61,14 @@ export default function DashboardPage() {
       setLoading(true);
       setError('');
       try {
-        const [dash, s, hist, r] = await Promise.all([
+        const [dash, s, hist] = await Promise.all([
           profileApi.getDashboard(),
           readinessApi.getScore().catch(() => null),
           readinessApi.getHistory().catch(() => []),
-          readinessApi.getRecommendations().catch(() => []),
         ]);
         setDashboard(dash);
         setScore(s);
         setHistory(hist);
-        setRecs(r);
       } catch (err) {
         setError(getErrorMessage(err));
       } finally {
@@ -183,9 +178,6 @@ export default function DashboardPage() {
     },
   ];
 
-  const initials = user?.profile?.fullName?.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase() || 'U';
-  const firstName = user?.profile?.fullName?.split(' ')[0] || 'there';
-
   return (
     <div className="analytics-dash">
       <div className="analytics-toolbar">
@@ -196,23 +188,6 @@ export default function DashboardPage() {
           </svg>
           <input type="search" placeholder="Search scores, skills, activity…" aria-label="Search dashboard" />
         </label>
-
-        <div className="analytics-toolbar__actions">
-          <button type="button" className="analytics-icon-btn" aria-label="Notifications">
-            <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" aria-hidden>
-              <path d="M12 4.5a5 5 0 0 1 5 5v2.2c0 .5.2 1 .5 1.4l.7.9a1 1 0 0 1-.8 1.6H6.6a1 1 0 0 1-.8-1.6l.7-.9c.3-.4.5-.9.5-1.4V9.5a5 5 0 0 1 5-5Z" stroke="currentColor" strokeWidth="1.6" />
-              <path d="M10 18.5a2 2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
-            {recs.length > 0 && <span className="analytics-icon-btn__dot" />}
-          </button>
-          <button type="button" className="analytics-profile" aria-label="Profile menu">
-            <span className="analytics-profile__avatar">{initials}</span>
-            <span className="hidden whitespace-nowrap text-sm font-medium sm:inline">{firstName}</span>
-            <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0 text-[#7aaea9]" fill="none" aria-hidden>
-              <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
       </div>
 
       {error && <ErrorAlert message={error} theme="dark" />}

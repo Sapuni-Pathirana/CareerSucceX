@@ -74,16 +74,16 @@ export default function RegisterPage() {
         <div className="pointer-events-none absolute inset-0 bg-dot-pattern opacity-[0.08]" aria-hidden />
         <div className="landing-hero-grain pointer-events-none absolute inset-0" aria-hidden />
 
-        <div className="relative z-10 mx-auto w-full max-w-sm animate-fade-in">
+        <div className="relative z-10 mx-auto w-full max-w-xl animate-fade-in px-2">
           <Link to="/" className="mb-8 flex justify-center">
             <div className="brand-mark h-14 w-14 rounded-2xl">
               <span className="text-xl font-black text-white">CS</span>
             </div>
           </Link>
 
-          <h2 className="text-center text-3xl font-extrabold tracking-tight text-white">
-            Begin building your{' '}
-            <span className="hero-caption-gradient">career readiness</span>
+          <h2 className="text-center text-[1.35rem] font-extrabold leading-tight tracking-tight text-white whitespace-nowrap sm:text-2xl lg:text-[1.65rem] xl:text-3xl">
+            Begin Building your{' '}
+            <span className="register-headline-gradient">Career Readiness</span>
           </h2>
           <p className="mb-8 mt-3 text-center text-sm text-[#7aaea9]">
             Everything you need to secure your next role
