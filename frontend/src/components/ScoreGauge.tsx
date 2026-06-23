@@ -9,10 +9,10 @@ interface ScoreGaugeProps {
 }
 
 function scoreColor(value: number, variant: 'default' | 'hero') {
-  if (value >= 75) return variant === 'hero' ? '#34d399' : '#10b981';
-  if (value >= 50) return '#6366f1';
-  if (value >= 25) return variant === 'hero' ? '#f97316' : '#f59e0b';
-  return '#ef4444';
+  if (value >= 75) return variant === 'hero' ? '#00B1B1' : '#008080';
+  if (value >= 50) return '#008080';
+  if (value >= 25) return variant === 'hero' ? '#114852' : '#0B262B';
+  return '#5a8885';
 }
 
 export default function ScoreGauge({
@@ -74,9 +74,9 @@ export default function ScoreGauge({
       <svg ref={ref} width={size} height={size} viewBox="0 0 130 130">
         <defs>
           <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#6366f1" />
-            <stop offset="50%" stopColor="#8b5cf6" />
-            <stop offset="100%" stopColor="#ec4899" />
+            <stop offset="0%" stopColor="#114852" />
+            <stop offset="50%" stopColor="#008080" />
+            <stop offset="100%" stopColor="#00B1B1" />
           </linearGradient>
           <filter id={glowId} x="-40%" y="-40%" width="180%" height="180%">
             <feGaussianBlur stdDeviation="3" result="blur" />
@@ -147,7 +147,7 @@ export default function ScoreGauge({
           y={variant === 'hero' ? 82 : 80}
           textAnchor="middle"
           fontSize={variant === 'hero' ? 12 : 11}
-          fill={isDark ? '#8b83a8' : '#94a3b8'}
+          fill={isDark ? '#7aaea9' : '#94a3b8'}
           fontFamily="Inter, sans-serif"
         >
           / 100

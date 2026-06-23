@@ -18,9 +18,18 @@ export default {
           950: '#1e1b4b',
         },
         aurora: {
-          from: '#6366f1',
-          via:  '#8b5cf6',
-          to:   '#ec4899',
+          from: '#114852',
+          via:  '#008080',
+          to:   '#00B1B1',
+        },
+        canvas: {
+          page:   '#040404',
+          card:   '#0B262B',
+          nested: '#114852',
+          footer: '#040404',
+          muted:  '#7aaea9',
+          subtle: '#5a8885',
+          body:   '#8ec4c1',
         },
         surface: {
           0:   '#ffffff',
@@ -34,20 +43,20 @@ export default {
         display: ['Cal Sans', 'Inter', 'system-ui', 'sans-serif'],
       },
       backgroundImage: {
-        'aurora':          'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
+        'aurora':          'linear-gradient(135deg, #114852 0%, #008080 50%, #00B1B1 100%)',
         'aurora-soft':     'linear-gradient(135deg, #eef2ff 0%, #f5f3ff 50%, #fdf2f8 100%)',
         'aurora-card':     'linear-gradient(145deg, rgba(99,102,241,0.08) 0%, rgba(139,92,246,0.06) 100%)',
         'glass':           'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))',
         'sidebar-glow':    'linear-gradient(180deg, #1e1b4b 0%, #312e81 100%)',
       },
       boxShadow: {
-        'glow-sm':   '0 0 12px rgba(99,102,241,0.2)',
-        'glow':      '0 0 24px rgba(99,102,241,0.25)',
-        'glow-lg':   '0 0 40px rgba(99,102,241,0.3)',
-        'glass':     '0 8px 32px rgba(99,102,241,0.12), 0 1px 0 rgba(255,255,255,0.8) inset',
-        'card':      '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(99,102,241,0.08)',
-        'card-hover':'0 4px 12px rgba(0,0,0,0.08), 0 16px 48px rgba(99,102,241,0.14)',
-        'aurora':    '0 8px 32px rgba(99,102,241,0.35)',
+        'glow-sm':   '0 0 12px rgba(0,128,128,0.2)',
+        'glow':      '0 0 24px rgba(0,128,128,0.25)',
+        'glow-lg':   '0 0 40px rgba(0,128,128,0.3)',
+        'glass':     '0 8px 32px rgba(0,128,128,0.12), 0 1px 0 rgba(255,255,255,0.8) inset',
+        'card':      '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,128,128,0.08)',
+        'card-hover':'0 4px 12px rgba(0,0,0,0.08), 0 16px 48px rgba(0,128,128,0.14)',
+        'aurora':    '0 14px 36px rgba(0,128,128,0.35)',
       },
       keyframes: {
         'fade-in': {
@@ -79,8 +88,8 @@ export default {
           to:   { backgroundPosition: '-200% center' },
         },
         'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 12px rgba(99,102,241,0.2)' },
-          '50%':       { boxShadow: '0 0 28px rgba(99,102,241,0.45)' },
+          '0%, 100%': { boxShadow: '0 14px 36px rgba(0,128,128,0.2)' },
+          '50%':       { boxShadow: '0 14px 48px rgba(0,177,177,0.45)' },
         },
         'gauge-fill': {
           from: { strokeDashoffset: '339.3' },

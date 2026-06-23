@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import AnalyticsMetricIcon from '../components/AnalyticsMetricIcon';
 import Navbar                from '../components/Navbar';
 import LandingHeroBackground from '../components/LandingHeroBackground';
 import LandingHeroCaptions   from '../components/LandingHeroCaptions';
@@ -7,6 +8,8 @@ import LandingFeatureSection from '../components/LandingFeatureSection';
 import LandingSectionTitle, { SectionGradientWord } from '../components/LandingSectionTitle';
 import MarqueeStrip            from '../components/MarqueeStrip';
 import ScrollReveal            from '../components/ScrollReveal';
+
+const statTones = ['orange', 'teal', 'pink', 'blue'] as const;
 
 const stats = [
   { value: 94,  suffix: '%', label: 'Interview Success Rate' },
@@ -68,7 +71,7 @@ const marqueeItems = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#06070d]">
+    <div className="landing-page min-h-screen overflow-x-hidden bg-[#040404]">
       {/* ── Floating Navbar ──────────────────────────── */}
       <Navbar />
 
@@ -79,47 +82,46 @@ export default function LandingPage() {
       </section>
 
       {/* ── Stats section ───────────────────────────── */}
-      <section className="relative border-y border-white/5 bg-[#06070d] py-16 px-4">
-        <div className="mx-auto max-w-5xl">
+      <section className="relative border-y border-white/[0.06] bg-[#040404] py-16 px-4">
+        <div className="mx-auto max-w-6xl">
           <LandingSectionTitle
             badge="Career Impact"
             badgeIcon="chart"
-            line1="Proven Outcomes for"
+            line1="Real results from"
             line2={
               <>
                 <SectionGradientWord tone={0}>Career</SectionGradientWord>{' '}
-                <SectionGradientWord tone={1}>Success</SectionGradientWord>
+                <SectionGradientWord tone={1}>Builders</SectionGradientWord>
               </>
             }
-            subtitle="Documented results from candidates who used CareerSucceX to strengthen their readiness and secure employment."
+            subtitle="People who use CareerSucceX get interview-ready faster and land roles they're actually aiming for."
             className="mb-12 sm:mb-14"
           />
 
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((s, i) => (
-            <ScrollReveal key={s.label} delay={i * 100}>
-              <div className="text-center">
-                <div className="text-5xl font-extrabold tabular-nums">
-                  <CountUp
-                    target={s.value}
-                    decimals={s.decimals}
-                    suffix={s.suffix}
-                    className="text-gradient"
-                  />
-                </div>
-                <p className="mt-2 text-sm font-medium text-slate-400">{s.label}</p>
+          <ScrollReveal delay={100}>
+            <div className="analytics-card">
+              <div className="analytics-kpi-row">
+                {stats.map((s, i) => (
+                  <article key={s.label} className="analytics-kpi">
+                    <AnalyticsMetricIcon tone={statTones[i]} />
+                    <p className="analytics-kpi__value">
+                      <CountUp target={s.value} decimals={s.decimals} suffix={s.suffix} />
+                    </p>
+                    <p className="analytics-kpi__label">{s.label}</p>
+                  </article>
+                ))}
               </div>
-            </ScrollReveal>
-          ))}
-        </div>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* ── Marquee strip ───────────────────────────── */}
-      <div className="bg-[#06070d] py-4">
+      <div className="bg-[#040404] py-4">
         <MarqueeStrip
           items={marqueeItems}
-          className="border-y border-white/5 py-3"
+          theme="dark"
+          className="border-y border-white/[0.06] py-3"
         />
       </div>
 
@@ -127,10 +129,8 @@ export default function LandingPage() {
       <LandingFeatureSection features={features} />
 
       {/* ── CTA bottom (dark) ───────────────────────── */}
-      <section className="relative overflow-hidden bg-sidebar-glow px-4 py-12 text-center sm:py-14">
-        <div className="pointer-events-none absolute inset-0 bg-dot-pattern opacity-10" />
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/20 blur-[80px]" />
-        <div className="relative z-10 mx-auto max-w-4xl px-2">
+      <section className="relative overflow-hidden bg-[#040404] px-4 py-16 text-center sm:py-20">
+        <div className="analytics-card relative z-10 mx-auto max-w-4xl px-6 py-10 sm:px-10 sm:py-12">
           <LandingSectionTitle
             badge="Get Started"
             badgeIcon="rocket"
@@ -142,22 +142,17 @@ export default function LandingPage() {
               </>
             }
             subtitle="Create a free account and receive your first readiness score within minutes."
-            className="mb-5"
+            className="mb-6"
           />
           <ScrollReveal delay={350}>
-            <Link
-              to="/register"
-              className="inline-block rounded-2xl bg-aurora px-10 py-4 text-base font-bold text-white
-                         shadow-aurora transition-all duration-300 hover:scale-[1.04] hover:shadow-glow-lg"
-            >
+            <Link to="/register" className="landing-cta-btn">
               Start for free →
             </Link>
           </ScrollReveal>
         </div>
       </section>
 
-      {/* ── Footer ──────────────────────────────────── */}
-      <footer className="bg-[#080910] px-4 py-5 text-center text-xs text-slate-600">
+      <footer className="border-t border-white/[0.06] bg-[#040404] px-4 py-5 text-center text-xs text-[#5a8885]">
         © {new Date().getFullYear()} CareerSucceX · Built with AI for career success
       </footer>
     </div>

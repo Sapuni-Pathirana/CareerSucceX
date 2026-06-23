@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import type { VerificationBadge } from '../types';
 
 type VerifiedAiTestsSectionProps = {
@@ -14,23 +15,76 @@ function formatVerifiedDate(iso?: string) {
 }
 
 export default function VerifiedAiTestsSection({ badges }: VerifiedAiTestsSectionProps) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollCards = (direction: 'left' | 'right') => {
+    const rail = scrollRef.current;
+    if (!rail) return;
+
+    const firstCard = rail.querySelector<HTMLElement>('.dash-verified-item');
+    const gap = 16;
+    const step = (firstCard?.offsetWidth ?? 192) + gap;
+
+    rail.scrollBy({
+      left: direction === 'left' ? -step : step,
+      behavior: 'smooth',
+    });
+  };
+
   return (
     <section className="dash-verified-section">
-      <div className="dash-verified-section__glow" aria-hidden />
-
-      <div className="relative z-10 mb-4 flex items-end justify-between gap-4">
+      <div className="mb-4 flex items-end justify-between gap-4">
         <div>
           <h2 className="text-base font-bold text-white sm:text-lg">Verified AI Tests</h2>
-          <p className="mt-1 text-sm text-[#a099c0]">
+          <p className="mt-1 text-sm text-[#7aaea9]">
             Scroll to view each skill you have verified with an AI quiz
           </p>
         </div>
         {badges.length > 1 && (
-          <p className="shrink-0 text-xs text-[#8b83a8]">Scroll to see more</p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="dash-verified-nav"
+              onClick={() => scrollCards('left')}
+              aria-label="Scroll verified cards left"
+            >
+              <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" aria-hidden>
+                <path
+                  d="M11.5 5.5 7 10l4.5 4.5"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="dash-verified-nav"
+              onClick={() => scrollCards('right')}
+              aria-label="Scroll verified cards right"
+            >
+              <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" aria-hidden>
+                <path
+                  d="M8.5 5.5 13 10l-4.5 4.5"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
         )}
       </div>
 
-      <div className="dash-verified-scroll" tabIndex={0} role="region" aria-label="Verified AI tests">
+      <div
+        ref={scrollRef}
+        className="dash-verified-scroll"
+        tabIndex={0}
+        role="region"
+        aria-label="Verified AI tests"
+      >
         {badges.map((badge) => (
           <article
             key={badge.skillId}
@@ -50,9 +104,9 @@ export default function VerifiedAiTestsSection({ badges }: VerifiedAiTestsSectio
               </svg>
             </div>
 
-            <div className="relative z-10 min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-white sm:text-base">{badge.skillName}</p>
-              <p className="mt-0.5 text-xs text-[#a099c0] sm:text-sm">
+            <div className="dash-verified-item__content">
+              <p className="dash-verified-item__title">{badge.skillName}</p>
+              <p className="dash-verified-item__date">
                 Verified on {formatVerifiedDate(badge.verifiedAt)}
               </p>
             </div>

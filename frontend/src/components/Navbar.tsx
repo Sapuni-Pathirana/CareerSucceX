@@ -192,9 +192,9 @@ export default function Navbar() {
               <circle cx="16" cy="16" r="13" stroke="url(#navGrad)" strokeWidth="2.5" fill="none" />
               <defs>
                 <linearGradient id="navGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#f97316" />
-                  <stop offset="0.5" stopColor="#a855f7" />
-                  <stop offset="1" stopColor="#6366f1" />
+                  <stop stopColor="#114852" />
+                  <stop offset="0.5" stopColor="#008080" />
+                  <stop offset="1" stopColor="#00B1B1" />
                 </linearGradient>
               </defs>
             </svg>
@@ -240,18 +240,14 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => logout()}
-              className="whitespace-nowrap rounded-xl bg-aurora px-5 py-2.5 text-[13px] font-semibold text-white
-                         shadow-[0_2px_12px_rgba(99,102,241,0.35)] transition-all duration-200
-                         hover:shadow-[0_4px_20px_rgba(99,102,241,0.5)] hover:scale-[1.03] active:scale-[0.97]"
+              className="btn-aurora whitespace-nowrap"
             >
               Sign out
             </button>
           ) : (
             <Link
               to="/login"
-              className="whitespace-nowrap rounded-xl bg-aurora px-5 py-2.5 text-[13px] font-semibold text-white
-                         shadow-[0_2px_12px_rgba(99,102,241,0.35)] transition-all duration-200
-                         hover:shadow-[0_4px_20px_rgba(99,102,241,0.5)] hover:scale-[1.03] active:scale-[0.97]"
+              className="btn-aurora whitespace-nowrap"
             >
               Sign in
             </Link>
@@ -327,8 +323,7 @@ export default function Navbar() {
                   setMenuOpen(false);
                   logout();
                 }}
-                className="mt-3 w-full rounded-xl bg-aurora px-4 py-2.5 text-center text-sm font-semibold text-white shadow-aurora
-                           transition-all duration-200 hover:shadow-[0_4px_20px_rgba(99,102,241,0.5)] active:scale-[0.97]"
+                className="btn-aurora btn-aurora--wide mt-3"
               >
                 Sign out
               </button>
@@ -336,8 +331,7 @@ export default function Navbar() {
               <Link
                 to="/login"
                 onClick={() => setMenuOpen(false)}
-                className="mt-3 block w-full rounded-xl bg-aurora px-4 py-2.5 text-center text-sm font-semibold text-white shadow-aurora
-                           transition-all duration-200 hover:shadow-[0_4px_20px_rgba(99,102,241,0.5)] active:scale-[0.97]"
+                className="btn-aurora btn-aurora--wide mt-3 block text-center"
               >
                 Sign in
               </Link>

@@ -72,7 +72,7 @@ _MIXED_QUESTIONS = [
     "Explain a technical concept relevant to {role}.",
     "Describe a time you solved a complex problem.",
     "How do you stay current with industry trends?",
-    "What is your greatest strength for this internship?",
+    "What is your greatest strength for this role?",
 ]
 
 
@@ -156,7 +156,7 @@ def _enrich_cv_fallback(request: CvEnrichRequest) -> CvEnrichResponse:
     if not sections["skills"]:
         suggestions.append(f"Add a skills section with keywords relevant to {request.target_role}.")
     if not sections["experience"]:
-        suggestions.append("Include internships, projects, or volunteer work under experience.")
+        suggestions.append("Include relevant work experience, projects, or volunteer work.")
     if not sections["education"]:
         suggestions.append("Add your degree, institution, and expected graduation date.")
     if not sections["summary"]:

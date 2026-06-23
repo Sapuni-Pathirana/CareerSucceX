@@ -21,7 +21,7 @@ export function SectionGradientWord({
 
 function LayersBadgeIcon() {
   return (
-    <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0 text-[#a78bfa]" fill="currentColor" aria-hidden>
+    <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0 text-white" fill="currentColor" aria-hidden>
       <path d="M8 1.5 1.75 5 8 8.5 14.25 5 8 1.5Z" opacity="0.45" />
       <path d="M1.75 8 8 11.5 14.25 8 8 4.5 1.75 8Z" opacity="0.7" />
       <path d="M1.75 11 8 14.5 14.25 11 8 7.5 1.75 11Z" />
@@ -31,7 +31,7 @@ function LayersBadgeIcon() {
 
 function ChartBadgeIcon() {
   return (
-    <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0 text-[#a78bfa]" fill="none" aria-hidden>
+    <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0 text-white" fill="none" aria-hidden>
       <path d="M3 12V8M7 12V5M11 12V3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );
@@ -39,7 +39,7 @@ function ChartBadgeIcon() {
 
 function RocketBadgeIcon() {
   return (
-    <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0 text-[#a78bfa]" fill="none" aria-hidden>
+    <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0 text-white" fill="none" aria-hidden>
       <path
         d="M8 2.5c2.2 2.4 3.5 5.2 3.5 8.5 0 .6-.5 1-1 1H5.5c-.5 0-1-.4-1-1 0-3.3 1.3-6.1 3.5-8.5Z"
         stroke="currentColor"

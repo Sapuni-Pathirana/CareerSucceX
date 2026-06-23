@@ -15,12 +15,12 @@ export default function MarqueeStrip({ items, className = '', theme = 'light' }:
           <span
             key={i}
             className={`inline-flex items-center gap-2 text-sm font-medium ${
-              isDark ? 'text-[#a099c0]' : 'text-slate-500'
+              isDark ? 'text-[#7aaea9]' : 'text-slate-500'
             }`}
           >
             <span
               className={`h-1.5 w-1.5 rounded-full ${
-                isDark ? 'bg-[#c4b5fd]' : 'bg-brand-400'
+                isDark ? 'bg-[#008080]' : 'bg-brand-400'
               }`}
             />
             {item}

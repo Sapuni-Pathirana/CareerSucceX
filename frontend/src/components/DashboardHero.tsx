@@ -81,7 +81,7 @@ export default function DashboardHero({
               <div className="flex flex-col items-center gap-3">
                 <span className={`dash-badge px-4 py-2 text-sm ring-1 ${statusPill}`}>{statusLabel}</span>
                 {updatedAt && (
-                  <p className="text-xs leading-relaxed text-[#8b83a8] sm:text-sm">
+                  <p className="text-xs leading-relaxed text-[#7aaea9] sm:text-sm">
                     Updated {new Date(updatedAt).toLocaleString()}
                   </p>
                 )}

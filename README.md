@@ -1,6 +1,6 @@
 # CareerSucceX
 
-Career readiness platform for university students and internship seekers.
+Career readiness platform for students and professionals — whether you're applying for jobs, internships, or your next role.
 
 ## Features
 
@@ -8,7 +8,7 @@ Career readiness platform for university students and internship seekers.
 - AI Mock Interviews
 - GitHub Repository Analysis
 - Skill Gap Detection
-- Internship Readiness Score
+- Career Readiness Score
 - Learning Roadmap
 - Skill Verification
 

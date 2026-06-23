@@ -11,17 +11,15 @@ const BOT_Y = VIEW_H;
 const FILL_DUR = '1.4s';
 const FILL_MS = 1400;
 
-/** Aurora palette — indigo → violet → rose (left → right) */
+/** Dashboard black-teal palette — black → gunmetal → midnight → teal → verdigris */
 const PALETTE: [number, number, number][] = [
-  [38, 38, 110],
-  [55, 48, 163],
-  [79, 70, 229],
-  [109, 40, 217],
-  [139, 92, 246],
-  [168, 85, 247],
-  [192, 58, 180],
-  [225, 72, 130],
-  [244, 120, 96],
+  [4, 4, 4],
+  [8, 28, 35],
+  [11, 38, 43],
+  [17, 72, 82],
+  [0, 128, 128],
+  [0, 155, 155],
+  [0, 177, 177],
 ];
 
 function mix(a: number, b: number, t: number) {
@@ -100,11 +98,11 @@ export default function LandingHeroBackground() {
         style={{
           background: `linear-gradient(
             90deg,
-            rgba(55,48,163,0.52) 0%,
-            rgba(79,70,229,0.48) 18%,
-            rgba(139,92,246,0.5) 45%,
-            rgba(192,58,180,0.44) 72%,
-            rgba(244,120,96,0.4) 100%
+            rgba(4,4,4,0.4) 0%,
+            rgba(11,38,43,0.35) 20%,
+            rgba(0,128,128,0.28) 50%,
+            rgba(0,177,177,0.22) 80%,
+            rgba(0,177,177,0.15) 100%
           )`,
           filter: 'blur(75px)',
           opacity: 0.88,
@@ -185,7 +183,7 @@ export default function LandingHeroBackground() {
         </g>
       </svg>
 
-      <div className="absolute inset-0 bg-gradient-to-b from-[#06070d] from-0% via-[#06070d]/55 via-[18%] to-transparent to-[48%]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#040404] from-0% via-[#040404]/55 via-[18%] to-transparent to-[48%]" />
 
       <div className="landing-hero-grain absolute inset-0" />
     </div>

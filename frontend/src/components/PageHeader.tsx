@@ -39,7 +39,7 @@ export default function PageHeader({
         {description && (
           <p
             className={`mt-1.5 text-sm leading-relaxed ${
-              isDark ? 'text-[#a099c0]' : 'text-slate-500'
+              isDark ? 'text-[#7aaea9]' : 'text-slate-500'
             }`}
           >
             {description}

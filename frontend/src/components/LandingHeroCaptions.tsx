@@ -67,17 +67,14 @@ export default function LandingHeroCaptions() {
       <CaptionBlock visible={visible} delay={600} className="flex justify-center">
         <Link
           to="/register"
-          className="rounded-2xl bg-aurora px-8 py-3.5 text-base font-semibold text-white
-                     shadow-[0_4px_24px_rgba(99,102,241,0.45)] transition-all duration-300
-                     hover:shadow-[0_8px_40px_rgba(99,102,241,0.6)] hover:scale-[1.04] active:scale-[0.97]
-                     animate-pulse-glow"
+          className="landing-cta-btn animate-pulse-glow"
         >
           Start for free →
         </Link>
       </CaptionBlock>
 
       <CaptionBlock visible={visible} delay={750}>
-        <p className="mt-8 text-sm leading-relaxed text-slate-400/90">
+        <p className="mt-8 text-sm leading-relaxed text-[#7aaea9]">
           Join thousands of job seekers who improved their career readiness with AI
         </p>
       </CaptionBlock>

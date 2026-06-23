@@ -14,7 +14,7 @@ export type FeatureCard = {
 function BadgeIcon() {
   return (
     <span
-      className="h-[9px] w-[9px] shrink-0 rounded-full border border-[#c4b5fd]"
+      className="h-[9px] w-[9px] shrink-0 rounded-full border border-[#008080]"
       aria-hidden
     />
   );
@@ -22,7 +22,7 @@ function BadgeIcon() {
 
 function CheckIcon() {
   return (
-    <svg viewBox="0 0 12 12" className="h-2 w-2 text-white" fill="none" aria-hidden>
+    <svg viewBox="0 0 12 12" className="h-2 w-2" fill="none" aria-hidden>
       <path
         d="M2.5 6.2 4.8 8.5 9.5 3.8"
         stroke="currentColor"
@@ -34,7 +34,7 @@ function CheckIcon() {
   );
 }
 
-const ARC_COUNT = 15;
+const ARC_COUNT = 6;
 const ARC_CX = 600;
 const ARC_CY = 360;
 
@@ -57,13 +57,6 @@ const ORBITAL_DOTS = [
   { arcIndex: 1, dur: '14s', begin: '0s', reverse: true, size: 'sm' as const },
   { arcIndex: 3, dur: '17s', begin: '2.5s', size: 'sm' as const },
   { arcIndex: 5, dur: '20s', begin: '1s', reverse: true },
-  { arcIndex: 6, dur: '18s', begin: '0s' },
-  { arcIndex: 7, dur: '22s', begin: '5s', reverse: true, size: 'sm' as const },
-  { arcIndex: 9, dur: '26s', begin: '4s' },
-  { arcIndex: 10, dur: '24s', begin: '8s', reverse: true },
-  { arcIndex: 11, dur: '30s', begin: '7s', size: 'sm' as const },
-  { arcIndex: 13, dur: '34s', begin: '11s', reverse: true },
-  { arcIndex: 14, dur: '38s', begin: '6s', size: 'sm' as const },
 ];
 
 function ArcEllipses({ range }: { range: [number, number] }) {
@@ -73,7 +66,13 @@ function ArcEllipses({ range }: { range: [number, number] }) {
       {Array.from({ length: end - start + 1 }, (_, j) => {
         const i = start + j;
         const { rx, ry, rot } = arcGeometry(i);
-        const stroke = i % 2 === 0 ? 'url(#feature-arc-gold)' : 'url(#feature-arc-gold-warm)';
+        const stroke = i % 4 === 0
+          ? 'url(#feature-arc-teal)'
+          : i % 4 === 1
+            ? 'url(#feature-arc-blue)'
+            : i % 4 === 2
+              ? 'url(#feature-arc-pink)'
+              : 'url(#feature-arc-orange)';
         return (
           <ellipse
             key={i}
@@ -134,7 +133,7 @@ function FeatureOrbitalDot({
         ) : null}
         <circle r={dot.halo} fill="url(#feature-dot-glow)" opacity="0.55" />
         <circle r={dot.core} fill="url(#feature-dot-core)" filter="url(#feature-dot-glow-filter)" />
-        <circle cx="-1" cy="-1" r={dot.spec} fill="#fffbeb" opacity="0.95" />
+        <circle cx="-1" cy="-1" r={dot.spec} fill="#ccfbf1" opacity="0.95" />
       </g>
     </g>
   );
@@ -178,26 +177,34 @@ function FeatureArcBackground() {
         preserveAspectRatio="xMidYMid slice"
       >
         <defs>
-          <linearGradient id="feature-arc-gold" x1="600" y1="60" x2="600" y2="640" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#fef08a" stopOpacity="0.95" />
-            <stop offset="0.28" stopColor="#fbbf24" stopOpacity="0.82" />
-            <stop offset="0.55" stopColor="#d4af37" stopOpacity="0.68" />
-            <stop offset="0.78" stopColor="#f59e0b" stopOpacity="0.52" />
-            <stop offset="1" stopColor="#b45309" stopOpacity="0.38" />
+          <linearGradient id="feature-arc-teal" x1="600" y1="60" x2="600" y2="640" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#008080" stopOpacity="0.55" />
+            <stop offset="0.5" stopColor="#008080" stopOpacity="0.28" />
+            <stop offset="1" stopColor="#008080" stopOpacity="0.08" />
           </linearGradient>
-          <linearGradient id="feature-arc-gold-warm" x1="200" y1="200" x2="1000" y2="600" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#fde68a" stopOpacity="0.85" />
-            <stop offset="0.45" stopColor="#fbbf24" stopOpacity="0.7" />
-            <stop offset="1" stopColor="#cd7f32" stopOpacity="0.45" />
+          <linearGradient id="feature-arc-blue" x1="200" y1="200" x2="1000" y2="600" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#00B1B1" stopOpacity="0.5" />
+            <stop offset="0.5" stopColor="#00B1B1" stopOpacity="0.26" />
+            <stop offset="1" stopColor="#00B1B1" stopOpacity="0.08" />
+          </linearGradient>
+          <linearGradient id="feature-arc-pink" x1="600" y1="60" x2="600" y2="640" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#114852" stopOpacity="0.55" />
+            <stop offset="0.5" stopColor="#114852" stopOpacity="0.28" />
+            <stop offset="1" stopColor="#114852" stopOpacity="0.08" />
+          </linearGradient>
+          <linearGradient id="feature-arc-orange" x1="200" y1="200" x2="1000" y2="600" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#0B262B" stopOpacity="0.5" />
+            <stop offset="0.5" stopColor="#0B262B" stopOpacity="0.26" />
+            <stop offset="1" stopColor="#0B262B" stopOpacity="0.08" />
           </linearGradient>
           <radialGradient id="feature-dot-core" cx="35%" cy="32%" r="65%">
-            <stop offset="0%" stopColor="#fffbeb" />
-            <stop offset="45%" stopColor="#fbbf24" />
-            <stop offset="100%" stopColor="#b45309" />
+            <stop offset="0%" stopColor="#7fd9d9" />
+            <stop offset="45%" stopColor="#008080" />
+            <stop offset="100%" stopColor="#114852" />
           </radialGradient>
           <radialGradient id="feature-dot-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
+            <stop offset="0%" stopColor="#008080" stopOpacity="0.45" />
+            <stop offset="100%" stopColor="#008080" stopOpacity="0" />
           </radialGradient>
           <filter id="feature-arc-glow" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="1.4" result="blur" />
@@ -232,16 +239,16 @@ function FeatureArcBackground() {
           />
         ))}
       </svg>
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0d0b1a]/15 via-transparent to-[#0d0b1a]/70" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#040404]/15 via-transparent to-[#040404]/70" />
     </div>
   );
 }
 
 function FeatureCardView({ badge, headline, footer, actionLabel, actionTo }: FeatureCard) {
   return (
-    <article className="feature-card group relative h-[17.5rem] overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#241c3b] p-5 sm:h-[18.5rem] sm:p-6">
+    <article className="analytics-card feature-card group relative h-[17.5rem] overflow-hidden p-5 sm:h-[18.5rem] sm:p-6">
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#6366f1]/30 via-[#8b5cf6]/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-focus-within:opacity-100"
+        className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#008080]/15 via-[#00B1B1]/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-focus-within:opacity-100"
         aria-hidden
       />
 
@@ -256,17 +263,17 @@ function FeatureCardView({ badge, headline, footer, actionLabel, actionTo }: Fea
         </h3>
 
         <div className="mt-5 flex items-center gap-2">
-          <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-[#8a4fff]">
+          <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-[#008080]/20 text-[#008080] ring-1 ring-[#008080]/35">
             <CheckIcon />
           </span>
-          <p className="text-[11px] font-medium leading-snug text-[#a099c0]">{footer}</p>
+          <p className="text-[11px] font-medium leading-snug text-[#7aaea9]">{footer}</p>
         </div>
       </div>
 
       <div className="absolute inset-x-5 bottom-5 z-10 flex justify-center translate-y-6 opacity-0 pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100 group-focus-within:pointer-events-auto sm:inset-x-6">
         <Link
           to={actionTo}
-          className="inline-flex w-full max-w-[12rem] items-center justify-center rounded-2xl bg-gradient-to-r from-[#3b82f6] via-[#6366f1] to-[#a855f7] px-3 py-2.5 text-sm font-semibold text-white shadow-[0_14px_36px_rgba(79,70,229,0.38)] transition-transform duration-200 hover:scale-[1.02]"
+          className="btn-primary rounded-2xl px-3 py-2.5 text-sm max-w-[12rem] w-full"
         >
           {actionLabel}
         </Link>
@@ -281,7 +288,7 @@ type LandingFeatureSectionProps = {
 
 export default function LandingFeatureSection({ features }: LandingFeatureSectionProps) {
   return (
-    <section className="relative overflow-hidden bg-[#0d0b1a] px-4 py-16 sm:py-20">
+    <section className="relative overflow-hidden bg-[#040404] px-4 py-16 sm:py-20">
       <FeatureArcBackground />
 
       <div className="relative z-10 mx-auto max-w-5xl">
