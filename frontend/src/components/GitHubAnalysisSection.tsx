@@ -3,14 +3,13 @@ import { useSearchParams } from 'react-router-dom';
 import { githubApi } from '../api/github';
 import { jobsApi } from '../api/jobs';
 import { getErrorMessage } from '../api/client';
-import ErrorAlert from '../components/ErrorAlert';
-import EmptyState from '../components/EmptyState';
-import LoadingSpinner from '../components/LoadingSpinner';
-import PageHeader from '../components/PageHeader';
-import ScoreGauge from '../components/ScoreGauge';
+import ErrorAlert from './ErrorAlert';
+import EmptyState from './EmptyState';
+import LoadingSpinner from './LoadingSpinner';
+import ScoreGauge from './ScoreGauge';
 import type { GitHubAnalysis, GitHubConnectionStatus } from '../types';
 
-export default function GitHubAnalysisPage() {
+export default function GitHubAnalysisSection() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [status, setStatus] = useState<GitHubConnectionStatus | null>(null);
   const [analysis, setAnalysis] = useState<GitHubAnalysis | null>(null);
@@ -94,7 +93,7 @@ export default function GitHubAnalysisPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-20">
+      <div className="flex justify-center py-12">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -102,10 +101,9 @@ export default function GitHubAnalysisPage() {
 
   return (
     <div>
-      <PageHeader
-        title="GitHub Analysis"
-        description="Connect your GitHub to analyze your portfolio and coding activity"
-      />
+      <p className="mb-4 text-sm text-slate-600">
+        Connect your GitHub to analyze your portfolio and coding activity
+      </p>
 
       {error && (
         <div className="mb-4">

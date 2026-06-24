@@ -3,14 +3,13 @@ import { cvApi } from '../api/cv';
 import { jobsApi } from '../api/jobs';
 import { profileApi } from '../api/profile';
 import { getErrorMessage } from '../api/client';
-import ErrorAlert from '../components/ErrorAlert';
-import EmptyState from '../components/EmptyState';
-import LoadingSpinner from '../components/LoadingSpinner';
-import PageHeader from '../components/PageHeader';
-import ScoreGauge from '../components/ScoreGauge';
+import ErrorAlert from './ErrorAlert';
+import EmptyState from './EmptyState';
+import LoadingSpinner from './LoadingSpinner';
+import ScoreGauge from './ScoreGauge';
 import type { CvAnalysis, CvDocument } from '../types';
 
-export default function CvAnalysisPage() {
+export default function CvAnalysisSection() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [documents, setDocuments] = useState<CvDocument[]>([]);
   const [analyses, setAnalyses] = useState<CvAnalysis[]>([]);
@@ -98,7 +97,7 @@ export default function CvAnalysisPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-20">
+      <div className="flex justify-center py-12">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -106,23 +105,22 @@ export default function CvAnalysisPage() {
 
   return (
     <div>
-      <PageHeader
-        title="CV Analysis"
-        description="Upload your CV and get ATS scoring with improvement suggestions"
-        action={
-          <label className="cursor-pointer rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
-            {uploading ? 'Uploading...' : 'Upload CV'}
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".pdf,.doc,.docx"
-              className="hidden"
-              onChange={handleUpload}
-              disabled={uploading}
-            />
-          </label>
-        }
-      />
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-slate-600">
+          Upload your CV and get ATS scoring with improvement suggestions
+        </p>
+        <label className="cursor-pointer rounded-lg bg-brand-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-brand-700">
+          {uploading ? 'Uploading...' : 'Upload CV'}
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf,.doc,.docx"
+            className="hidden"
+            onChange={handleUpload}
+            disabled={uploading}
+          />
+        </label>
+      </div>
 
       {error && (
         <div className="mb-4">
@@ -138,7 +136,7 @@ export default function CvAnalysisPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-1">
-          <h2 className="text-lg font-semibold text-slate-900">Your Documents</h2>
+          <h3 className="text-lg font-semibold text-slate-900">Your Documents</h3>
           {documents.length === 0 ? (
             <EmptyState title="No CV uploaded" description="Upload a PDF or DOCX to get started" />
           ) : (
@@ -176,7 +174,7 @@ export default function CvAnalysisPage() {
             </ul>
           )}
 
-          <h2 className="pt-4 text-lg font-semibold text-slate-900">Analysis History</h2>
+          <h3 className="pt-4 text-lg font-semibold text-slate-900">Analysis History</h3>
           {analyses.length === 0 ? (
             <p className="text-sm text-slate-500">No analyses yet</p>
           ) : (
@@ -234,7 +232,7 @@ export default function CvAnalysisPage() {
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
                   {Object.entries(selectedAnalysis.keywordReport).map(([key, values]) => (
                     <div key={key}>
-                      <h3 className="mb-2 text-sm font-semibold capitalize text-slate-900">{key}</h3>
+                      <h4 className="mb-2 text-sm font-semibold capitalize text-slate-900">{key}</h4>
                       <div className="flex flex-wrap gap-1.5">
                         {(values as string[]).map((v) => (
                           <span
@@ -256,7 +254,7 @@ export default function CvAnalysisPage() {
 
               {selectedAnalysis.suggestions?.length > 0 && (
                 <div className="mt-6">
-                  <h3 className="mb-2 text-sm font-semibold text-slate-900">Suggestions</h3>
+                  <h4 className="mb-2 text-sm font-semibold text-slate-900">Suggestions</h4>
                   <ul className="list-inside list-disc space-y-1 text-sm text-slate-700">
                     {selectedAnalysis.suggestions.map((s, i) => (
                       <li key={i}>{s}</li>

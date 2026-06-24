@@ -24,14 +24,14 @@ const features = [
     headline: 'Upload your CV and receive instant ATS scoring with line-by-line AI feedback.',
     footer: 'We own ATS compatibility',
     actionLabel: 'Upload CV',
-    actionTo: '/cv',
+    actionTo: '/analyze#cv-analysis',
   },
   {
     badge: 'GitHub',
     headline: 'Connect your repos to extract skills, measure quality, and surface strengths automatically.',
     footer: 'We own portfolio intelligence',
     actionLabel: 'Connect GitHub',
-    actionTo: '/github',
+    actionTo: '/analyze#github-analysis',
   },
   {
     badge: 'Interviews',
@@ -45,7 +45,7 @@ const features = [
     headline: 'Earn verified skill badges through AI quizzes that prove competency to employers.',
     footer: 'We own skill credibility',
     actionLabel: 'Verify Skills',
-    actionTo: '/verification',
+    actionTo: '/skills?tab=verification',
   },
   {
     badge: 'Gap Analysis',

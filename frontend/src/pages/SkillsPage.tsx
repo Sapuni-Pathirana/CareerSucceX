@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { skillsApi } from '../api/skills';
 import { profileApi } from '../api/profile';
 import { verificationsApi } from '../api/verifications';
@@ -8,7 +8,7 @@ import ErrorAlert from '../components/ErrorAlert';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PageHeader from '../components/PageHeader';
-import type { Skill, SkillGap, UserSkill, VerificationBadge } from '../types';
+import type { Skill, SkillGap, UserSkill, VerificationBadge, VerificationHistoryItem } from '../types';
 
 const priorityColors: Record<string, string> = {
   CRITICAL: 'bg-red-100 text-red-800',
@@ -26,7 +26,7 @@ const sourceLabels: Record<string, string> = {
 
 const levelLabels = ['None', 'Beginner', 'Basic', 'Intermediate', 'Advanced', 'Expert'];
 
-type Tab = 'assessment' | 'mine' | 'gaps';
+type Tab = 'assessment' | 'mine' | 'gaps' | 'verification';
 
 function LevelPicker({
   value,
@@ -57,13 +57,21 @@ function LevelPicker({
 }
 
 export default function SkillsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [taxonomy, setTaxonomy] = useState<Skill[]>([]);
   const [mySkills, setMySkills] = useState<UserSkill[]>([]);
   const [gaps, setGaps] = useState<SkillGap[]>([]);
   const [badges, setBadges] = useState<VerificationBadge[]>([]);
+  const [history, setHistory] = useState<VerificationHistoryItem[]>([]);
   const [levels, setLevels] = useState<Record<string, number>>({});
   const [search, setSearch] = useState('');
-  const [tab, setTab] = useState<Tab>('assessment');
+  const [tab, setTab] = useState<Tab>(() => {
+    const requested = searchParams.get('tab');
+    if (requested === 'verification' || requested === 'mine' || requested === 'gaps' || requested === 'assessment') {
+      return requested;
+    }
+    return 'assessment';
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
@@ -76,11 +84,12 @@ export default function SkillsPage() {
     setLoading(true);
     setError('');
     try {
-      const [tax, mine, profile, badgeList] = await Promise.all([
+      const [tax, mine, profile, badgeList, hist] = await Promise.all([
         skillsApi.getTaxonomy(),
         skillsApi.getMine().catch(() => []),
         profileApi.get().catch(() => null),
         verificationsApi.getBadges().catch(() => []),
+        verificationsApi.getHistory().catch(() => []),
       ]);
 
       const roleId = profile?.targetRoleId ?? '';
@@ -97,6 +106,7 @@ export default function SkillsPage() {
       setMySkills(userSkills);
       setGaps(Array.isArray(gapList) ? gapList : []);
       setBadges(Array.isArray(badgeList) ? badgeList : []);
+      setHistory(Array.isArray(hist) ? hist : []);
 
       const selfLevels: Record<string, number> = {};
       userSkills.filter((s) => s.source === 'SELF').forEach((s) => {
@@ -116,6 +126,23 @@ export default function SkillsPage() {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    const requested = searchParams.get('tab');
+    if (requested === 'verification' || requested === 'mine' || requested === 'gaps' || requested === 'assessment') {
+      setTab(requested);
+    }
+  }, [searchParams]);
+
+  const switchTab = (next: Tab) => {
+    setTab(next);
+    if (next === 'assessment') {
+      searchParams.delete('tab');
+    } else {
+      searchParams.set('tab', next);
+    }
+    setSearchParams(searchParams, { replace: true });
+  };
 
   const badgeSkillIds = useMemo(() => new Set(badges.map((b) => b.skillId)), [badges]);
 
@@ -165,7 +192,7 @@ export default function SkillsPage() {
     try {
       const gapList = await skillsApi.recalculateGaps(targetRoleId);
       setGaps(gapList);
-      setTab('gaps');
+      switchTab('gaps');
       setSuccess(`Found ${gapList.length} skill gap${gapList.length === 1 ? '' : 's'} for your target role`);
     } catch (err) {
       setError(getErrorMessage(err));
@@ -239,7 +266,7 @@ export default function SkillsPage() {
       <div className="mb-4 flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => setTab('assessment')}
+          onClick={() => switchTab('assessment')}
           className={`rounded-lg px-4 py-2 text-sm font-medium ${
             tab === 'assessment' ? 'bg-brand-600 text-white' : 'bg-white text-slate-700 border border-slate-200'
           }`}
@@ -248,7 +275,7 @@ export default function SkillsPage() {
         </button>
         <button
           type="button"
-          onClick={() => setTab('mine')}
+          onClick={() => switchTab('mine')}
           className={`rounded-lg px-4 py-2 text-sm font-medium ${
             tab === 'mine' ? 'bg-brand-600 text-white' : 'bg-white text-slate-700 border border-slate-200'
           }`}
@@ -257,12 +284,21 @@ export default function SkillsPage() {
         </button>
         <button
           type="button"
-          onClick={() => setTab('gaps')}
+          onClick={() => switchTab('gaps')}
           className={`rounded-lg px-4 py-2 text-sm font-medium ${
             tab === 'gaps' ? 'bg-brand-600 text-white' : 'bg-white text-slate-700 border border-slate-200'
           }`}
         >
           Skill Gaps ({gaps.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => switchTab('verification')}
+          className={`rounded-lg px-4 py-2 text-sm font-medium ${
+            tab === 'verification' ? 'bg-brand-600 text-white' : 'bg-white text-slate-700 border border-slate-200'
+          }`}
+        >
+          Verification ({badges.length})
         </button>
       </div>
 
@@ -376,7 +412,7 @@ export default function SkillsPage() {
             action={
               <button
                 type="button"
-                onClick={() => setTab('assessment')}
+                onClick={() => switchTab('assessment')}
                 className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
               >
                 Start self-rating
@@ -470,6 +506,91 @@ export default function SkillsPage() {
             ))}
           </ul>
         ))}
+
+      {tab === 'verification' && (
+        <div className="space-y-8">
+          {badges.length > 0 && (
+            <div>
+              <h2 className="mb-4 text-lg font-semibold text-slate-900">Your Badges</h2>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {badges.map((badge) => (
+                  <div
+                    key={badge.skillId}
+                    className="flex items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4"
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 text-xl text-white">
+                      ✓
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900">{badge.skillName}</p>
+                      <p className="text-sm text-emerald-700">Score: {Math.round(badge.score)}%</p>
+                      <p className="text-xs text-slate-500">
+                        {new Date(badge.verifiedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div>
+            <h2 className="mb-4 text-lg font-semibold text-slate-900">Available Skills</h2>
+            {taxonomy.length === 0 ? (
+              <EmptyState title="No skills available" description="Skill taxonomy is not loaded yet" />
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {taxonomy.map((skill) => (
+                  <div
+                    key={skill.id}
+                    className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                  >
+                    <div>
+                      <p className="font-medium text-slate-900">{skill.name}</p>
+                      <p className="text-xs text-slate-500">{skill.category.replace(/_/g, ' ')}</p>
+                      {badgeSkillIds.has(skill.id) && (
+                        <span className="mt-1 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                          Verified
+                        </span>
+                      )}
+                    </div>
+                    <Link
+                      to={`/verification/${skill.id}`}
+                      className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700"
+                    >
+                      {badgeSkillIds.has(skill.id) ? 'Retake' : 'Start Quiz'}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {history.length > 0 && (
+            <div>
+              <h2 className="mb-4 text-lg font-semibold text-slate-900">Attempt History</h2>
+              <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+                {history.map((item) => (
+                  <li key={item.id} className="flex items-center justify-between px-4 py-3">
+                    <div>
+                      <p className="font-medium text-slate-900">{item.skillName}</p>
+                      <p className="text-xs text-slate-500">
+                        Attempt #{item.attemptNumber} · {new Date(item.verifiedAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-semibold ${item.passed ? 'text-emerald-600' : 'text-amber-600'}`}>
+                        {Math.round(item.score)}%
+                      </p>
+                      <p className="text-xs text-slate-500">{item.passed ? 'Passed' : 'Failed'}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

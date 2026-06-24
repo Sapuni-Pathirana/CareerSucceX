@@ -60,8 +60,8 @@ export default function VerificationQuizPage() {
   if (result) {
     return (
       <div>
-        <Link to="/verification" className="text-sm text-brand-600 hover:underline">
-          ← Back to verification
+        <Link to="/skills?tab=verification" className="text-sm text-brand-600 hover:underline">
+          ← Back to skills
         </Link>
         <div className="mt-6 rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
           <div className="flex justify-center">
@@ -79,7 +79,7 @@ export default function VerificationQuizPage() {
           )}
           <button
             type="button"
-            onClick={() => navigate('/verification')}
+            onClick={() => navigate('/skills?tab=verification')}
             className="mt-6 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
           >
             Done
@@ -93,8 +93,8 @@ export default function VerificationQuizPage() {
     return (
       <div>
         <ErrorAlert message={error || 'Failed to start quiz'} />
-        <Link to="/verification" className="mt-4 inline-block text-brand-600 hover:underline">
-          Back to verification
+        <Link to="/skills?tab=verification" className="mt-4 inline-block text-brand-600 hover:underline">
+          Back to skills
         </Link>
       </div>
     );
@@ -102,8 +102,8 @@ export default function VerificationQuizPage() {
 
   return (
     <div>
-      <Link to="/verification" className="text-sm text-brand-600 hover:underline">
-        ← Back to verification
+      <Link to="/skills?tab=verification" className="text-sm text-brand-600 hover:underline">
+        ← Back to skills
       </Link>
 
       {error && (

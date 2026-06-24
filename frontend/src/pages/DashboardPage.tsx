@@ -27,8 +27,25 @@ const tooltipStyle = {
   fontSize: '12px',
 };
 
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const READINESS_TARGET = 75;
+
+const BREAKDOWN_ORDER = ['cv', 'github', 'skills', 'interview', 'verification'] as const;
+
+const breakdownLabels: Record<string, string> = {
+  cv: 'CV / ATS',
+  github: 'GitHub',
+  skills: 'Skills',
+  interview: 'Interview',
+  verification: 'Verification',
+};
+
+const chartLabels: Record<string, string> = {
+  cv: 'CV',
+  github: 'GitHub',
+  skills: 'Skills',
+  interview: 'Interview',
+  verification: 'Verified',
+};
 
 function progressTone(index: number) {
   return ['orange', 'teal', 'blue', 'pink'][index % 4] as 'orange' | 'teal' | 'blue' | 'pink';
@@ -85,7 +102,7 @@ export default function DashboardPage() {
     );
   }
 
-  const fmt = (v?: number) => (v != null && !isNaN(Number(v)) ? Math.round(Number(v)) : 0);
+  const fmt = (v?: number | null) => (v != null && !Number.isNaN(Number(v)) ? Math.round(Number(v)) : 0);
   const overall = fmt(score?.overallScore ?? dashboard?.readiness?.overallScore);
   const breakdown = score?.breakdown ?? {};
 
@@ -96,100 +113,84 @@ export default function DashboardPage() {
     ? fmt(histSorted[histSorted.length - 2].overallScore)
     : undefined;
 
-  let scoreRows = Object.entries(breakdown).map(([name, value], i) => ({
-    id: String(i + 1).padStart(2, '0'),
-    name: name.replace(/Score$/, '').replace(/([A-Z])/g, ' $1').trim(),
-    progress: Math.round(Number(value)),
-    score: Math.round(Number(value)),
-    tone: progressTone(i),
-  }));
+  const cvScore = fmt(breakdown.cv ?? dashboard?.cvScore);
+  const githubScore = fmt(breakdown.github ?? dashboard?.githubScore);
+  const interviewScore = fmt(breakdown.interview ?? dashboard?.interviewScore);
+  const skillsScore = fmt(breakdown.skills);
+  const verificationScore = fmt(breakdown.verification);
 
-  if (scoreRows.length === 0) {
-    scoreRows = [
-      { id: '01', name: 'CV / ATS', progress: fmt(dashboard?.cvScore), score: fmt(dashboard?.cvScore), tone: 'orange' },
-      { id: '02', name: 'GitHub', progress: fmt(dashboard?.githubScore), score: fmt(dashboard?.githubScore), tone: 'teal' },
-      { id: '03', name: 'Interview', progress: fmt(dashboard?.interviewScore), score: fmt(dashboard?.interviewScore), tone: 'blue' },
-      {
-        id: '04',
-        name: 'Skills',
-        progress: Math.max(0, 100 - (dashboard?.skillGapCount ?? 0) * 10),
-        score: Math.max(0, 100 - (dashboard?.skillGapCount ?? 0) * 10),
-        tone: 'pink',
-      },
-    ];
-  }
+  const scoreRows = BREAKDOWN_ORDER.map((key, i) => {
+    const value =
+      key === 'cv' ? cvScore
+      : key === 'github' ? githubScore
+      : key === 'interview' ? interviewScore
+      : key === 'skills' ? skillsScore
+      : verificationScore;
+    return {
+      id: String(i + 1).padStart(2, '0'),
+      name: breakdownLabels[key],
+      progress: value,
+      score: value,
+      tone: progressTone(i),
+    };
+  });
 
-  const comparisonData = scoreRows.slice(0, 4).map((row) => ({
-    label: row.name.split(' ')[0].slice(0, 4),
-    current: row.score,
+  const comparisonData = BREAKDOWN_ORDER.map((key, i) => ({
+    label: chartLabels[key],
+    current: scoreRows[i].score,
     target: READINESS_TARGET,
   }));
 
-  const trendData = months.map((month, i) => {
-    const point = histSorted[i] ?? histSorted[histSorted.length - 1];
-    const current = point ? fmt(point.overallScore) : overall;
-    const previous = i > 0 && histSorted[i - 1] ? fmt(histSorted[i - 1].overallScore) : Math.max(0, current - 8);
-    return { month, previous, current };
-  });
+  const trendData = histSorted.length > 1
+    ? histSorted.map((point, i) => ({
+        month: new Date(point.calculatedAt).toLocaleDateString('en-US', { month: 'short' }),
+        previous: i > 0 ? fmt(histSorted[i - 1].overallScore) : fmt(point.overallScore),
+        current: fmt(point.overallScore),
+      }))
+    : [{ month: 'Now', previous: overall, current: overall }];
 
-  const historyByMonth = months.map((month, i) => {
-    const match = histSorted.find((h) => new Date(h.calculatedAt).getMonth() === i);
-    return {
-      month,
-      readiness: match ? fmt(match.overallScore) : i <= new Date().getMonth() ? overall : null,
-    };
-  }).filter((row) => row.readiness != null) as { month: string; readiness: number }[];
+  const historyChartData = histSorted.length > 0
+    ? histSorted.map((point) => ({
+        month: new Date(point.calculatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        readiness: fmt(point.overallScore),
+      }))
+    : [{ month: 'Now', readiness: overall }];
 
-  const historyChartData = historyByMonth.length > 0
-    ? historyByMonth
-    : months.slice(0, 6).map((month, i) => ({
-        month,
-        readiness: Math.max(0, overall - (5 - i) * 4),
-      }));
-
-  const previousPeriodScore = prevOverall ?? Math.max(0, overall - 8);
+  const previousPeriodScore = prevOverall ?? overall;
   const skillGaps = dashboard?.skillGapCount ?? 0;
   const verifiedCount = dashboard?.verifiedSkillsCount ?? 0;
 
   const kpiCards = [
     {
       tone: 'orange' as const,
-      value: fmt(dashboard?.cvScore),
+      value: cvScore,
       label: 'CV / ATS Score',
-      trend: formatScoreDelta(fmt(dashboard?.cvScore), prevOverall),
+      trend: cvScore > 0 ? 'From your latest CV analysis' : 'Upload a CV on Analyze to score',
     },
     {
       tone: 'teal' as const,
-      value: fmt(dashboard?.githubScore),
+      value: githubScore,
       label: 'GitHub Score',
-      trend: 'Portfolio strength from repositories',
+      trend: githubScore > 0 ? 'From your latest GitHub analysis' : 'Connect GitHub on Analyze to score',
     },
     {
       tone: 'pink' as const,
-      value: fmt(dashboard?.interviewScore),
+      value: interviewScore,
       label: 'Interview Score',
-      trend: 'AI mock interview performance',
+      trend: interviewScore > 0 ? 'Average of your last 3 mock interviews' : 'Complete a mock interview to score',
     },
     {
       tone: 'blue' as const,
       value: verifiedCount,
       label: 'Verified Skills',
-      trend: skillGaps > 0 ? `${skillGaps} skill gaps remaining` : 'All tracked skills verified',
+      trend: skillGaps > 0
+        ? `${skillGaps} skill gap${skillGaps === 1 ? '' : 's'} · ${verifiedCount} verified`
+        : `${verifiedCount} skill${verifiedCount === 1 ? '' : 's'} verified`,
     },
   ];
 
   return (
     <div className="analytics-dash">
-      <div className="analytics-toolbar">
-        <label className="analytics-search">
-          <svg viewBox="0 0 20 20" fill="none" aria-hidden>
-            <circle cx="9" cy="9" r="5.5" stroke="currentColor" strokeWidth="1.6" />
-            <path d="M13.5 13.5 17 17" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-          </svg>
-          <input type="search" placeholder="Search scores, skills, activity…" aria-label="Search dashboard" />
-        </label>
-      </div>
-
       {error && <ErrorAlert message={error} theme="dark" />}
 
       <div className="analytics-layout">
@@ -217,7 +218,13 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={comparisonData} barGap={4} barCategoryGap="28%">
                 <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fill: '#7aaea9', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fill: '#7aaea9', fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                  interval={0}
+                />
                 <YAxis hide domain={[0, 100]} />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Bar dataKey="current" name="Current" fill="#008080" radius={[6, 6, 0, 0]} barSize={14} />
@@ -241,7 +248,7 @@ export default function DashboardPage() {
               <span>Progress</span>
               <span>Score</span>
             </div>
-            {scoreRows.slice(0, 4).map((row) => (
+            {scoreRows.map((row) => (
               <div key={row.id} className="analytics-table__row">
                 <span className="analytics-table__id">{row.id}</span>
                 <span className="analytics-table__name">{row.name}</span>
@@ -297,7 +304,12 @@ export default function DashboardPage() {
           <h2 className="analytics-card__title">Overall Readiness</h2>
           <p className="analytics-card__subtitle">Composite career readiness score</p>
           <p className="analytics-earnings__value">{overall}%</p>
-          <p className="analytics-earnings__hint">{readinessStatus(overall)}</p>
+          <p className="analytics-earnings__hint">
+            {readinessStatus(overall)}
+            {prevOverall != null && prevOverall !== overall && (
+              <> · {formatScoreDelta(overall, prevOverall)}</>
+            )}
+          </p>
           <EarningsGauge value={overall} label={`${overall}%`} />
         </section>
 

@@ -3,48 +3,27 @@ import { Link, useLocation } from 'react-router-dom';
 import DashboardHeaderActions from './DashboardHeaderActions';
 import { useAuth } from '../context/AuthContext';
 
-type NavLink = { to: string; label: string };
-
-type NavItem =
-  | { type: 'link'; to: string; label: string }
-  | { type: 'group'; id: string; label: string; items: NavLink[] };
-
-const navItems: NavItem[] = [
-  { type: 'link', to: '/dashboard', label: 'Dashboard' },
-  {
-    type: 'group',
-    id: 'analyze',
-    label: 'Analyze',
-    items: [
-      { to: '/cv', label: 'CV Analysis' },
-      { to: '/github', label: 'GitHub' },
-    ],
-  },
-  { type: 'link', to: '/interviews', label: 'Interviews' },
-  {
-    type: 'group',
-    id: 'skills',
-    label: 'Skills',
-    items: [
-      { to: '/skills', label: 'My Skills' },
-      { to: '/verification', label: 'Verification' },
-    ],
-  },
-  { type: 'link', to: '/roadmap', label: 'Learning Roadmap' },
+const navItems = [
+  { to: '/dashboard', label: 'Dashboard' },
+  { to: '/analyze', label: 'Analyze' },
+  { to: '/interviews', label: 'Interviews' },
+  { to: '/skills', label: 'Skills' },
+  { to: '/roadmap', label: 'Learning Roadmap' },
 ];
 
 function isNavActive(pathname: string, to: string) {
   if (to === '/dashboard') return pathname === '/dashboard';
+  if (to === '/analyze') {
+    return pathname === '/analyze' || pathname === '/cv' || pathname === '/github';
+  }
+  if (to === '/skills') {
+    return pathname === '/skills' || pathname === '/verification' || pathname.startsWith('/verification/');
+  }
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
-function isGroupActive(pathname: string, items: NavLink[]) {
-  return items.some((item) => isNavActive(pathname, item.to));
-}
-
-function navLinkBase(active: boolean, open = false) {
-  const highlighted = active || open;
-  return `nav-link group ${highlighted ? 'nav-link--active' : ''}`;
+function navLinkBase(active: boolean) {
+  return `nav-link group ${active ? 'nav-link--active' : ''}`;
 }
 
 function NavHighlight({ show }: { show: boolean }) {
@@ -54,6 +33,7 @@ function NavHighlight({ show }: { show: boolean }) {
     />
   );
 }
+
 function easeOutCubic(t: number) {
   return 1 - (1 - t) ** 3;
 }
@@ -72,64 +52,10 @@ function navMetrics(scrollY: number) {
   };
 }
 
-function NavDropdown({
-  label,
-  items,
-  pathname,
-  open,
-  onOpen,
-  onClose,
-}: {
-  label: string;
-  items: NavLink[];
-  pathname: string;
-  open: boolean;
-  onOpen: () => void;
-  onClose: () => void;
-}) {
-  const active = isGroupActive(pathname, items);
-
-  return (
-    <div className="relative" onMouseEnter={onOpen} onMouseLeave={onClose}>
-      <button
-        type="button"
-        onClick={() => (open ? onClose() : onOpen())}
-        className={`${navLinkBase(active, open)} cursor-pointer border-0 bg-transparent`}
-        aria-expanded={open}
-        aria-haspopup="true"
-      >
-        {label}
-        <NavHighlight show={active || open} />
-      </button>
-
-      {open && (
-        <div className="absolute left-1/2 top-full z-50 -translate-x-1/2 pt-2">
-          <div className="min-w-[11rem] overflow-hidden rounded-xl border border-slate-200/80 bg-white py-1 shadow-[0_12px_40px_rgba(0,0,0,0.1)]">
-            {items.map((item) => {
-              const itemActive = isNavActive(pathname, item.to);
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={onClose}
-                  className={`nav-dropdown-item ${itemActive ? 'nav-dropdown-item--active' : ''}`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function Navbar() {
   const location = useLocation();
   const { isAuthenticated, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [scrollY, setScrollY] = useState(0);
   const navRef = useRef<HTMLDivElement>(null);
 
@@ -140,6 +66,20 @@ export default function Navbar() {
     ? { progress: 0, maxWidth: 82.5, linkGap: 2, paddingX: 1.5 }
     : navMetrics(scrollY);
   const shellClass = isDashboard ? 'page-shell' : 'page-shell page-shell--wide';
+
+  const navLinks = (
+    <>
+      {navItems.map((item) => {
+        const active = isNavActive(location.pathname, item.to);
+        return (
+          <Link key={item.to} to={item.to} className={navLinkBase(active)}>
+            {item.label}
+            <NavHighlight show={active} />
+          </Link>
+        );
+      })}
+    </>
+  );
 
   const standardNav = (
     <nav
@@ -173,29 +113,7 @@ export default function Navbar() {
         className="navbar-links min-w-0 flex-1 justify-center"
         style={isLanding ? { gap: `${metrics.linkGap}rem` } : undefined}
       >
-        {navItems.map((item) => {
-          if (item.type === 'link') {
-            const active = isNavActive(location.pathname, item.to);
-            return (
-              <Link key={item.to} to={item.to} className={navLinkBase(active)}>
-                {item.label}
-                <NavHighlight show={active} />
-              </Link>
-            );
-          }
-
-          return (
-            <NavDropdown
-              key={item.id}
-              label={item.label}
-              items={item.items}
-              pathname={location.pathname}
-              open={openDropdown === item.id}
-              onOpen={() => setOpenDropdown(item.id)}
-              onClose={() => setOpenDropdown(null)}
-            />
-          );
-        })}
+        {navLinks}
       </div>
 
       <div className="flex shrink-0 items-center justify-end gap-2">
@@ -237,39 +155,16 @@ export default function Navbar() {
     >
       <div className="flex flex-col gap-1">
         {navItems.map((item) => {
-          if (item.type === 'link') {
-            const active = isNavActive(location.pathname, item.to);
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => setMenuOpen(false)}
-                className={`nav-mobile-link ${active ? 'nav-mobile-link--active' : ''}`}
-              >
-                {item.label}
-              </Link>
-            );
-          }
-
+          const active = isNavActive(location.pathname, item.to);
           return (
-            <div key={item.id} className="pt-1">
-              <p className="px-4 pb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                {item.label}
-              </p>
-              {item.items.map((sub) => {
-                const active = isNavActive(location.pathname, sub.to);
-                return (
-                  <Link
-                    key={sub.to}
-                    to={sub.to}
-                    onClick={() => setMenuOpen(false)}
-                    className={`nav-mobile-sublink ${active ? 'nav-mobile-sublink--active' : ''}`}
-                  >
-                    {sub.label}
-                  </Link>
-                );
-              })}
-            </div>
+            <Link
+              key={item.to}
+              to={item.to}
+              onClick={() => setMenuOpen(false)}
+              className={`nav-mobile-link ${active ? 'nav-mobile-link--active' : ''}`}
+            >
+              {item.label}
+            </Link>
           );
         })}
 
@@ -324,19 +219,8 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    setOpenDropdown(null);
     setMenuOpen(false);
   }, [location.pathname]);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (navRef.current && !navRef.current.contains(e.target as Node)) {
-        setOpenDropdown(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   return (
     <div ref={navRef} className="app-navbar-shell fixed inset-x-0 top-0 z-50">
@@ -366,29 +250,7 @@ export default function Navbar() {
               </Link>
 
               <div className="navbar-links min-w-0 flex-1 justify-center">
-                {navItems.map((item) => {
-                  if (item.type === 'link') {
-                    const active = isNavActive(location.pathname, item.to);
-                    return (
-                      <Link key={item.to} to={item.to} className={navLinkBase(active)}>
-                        {item.label}
-                        <NavHighlight show={active} />
-                      </Link>
-                    );
-                  }
-
-                  return (
-                    <NavDropdown
-                      key={item.id}
-                      label={item.label}
-                      items={item.items}
-                      pathname={location.pathname}
-                      open={openDropdown === item.id}
-                      onOpen={() => setOpenDropdown(item.id)}
-                      onClose={() => setOpenDropdown(null)}
-                    />
-                  );
-                })}
+                {navLinks}
               </div>
 
               <button
