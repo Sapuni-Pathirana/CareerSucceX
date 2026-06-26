@@ -15,9 +15,10 @@ app:
     refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
   cors-origins: ${APP_CORS_ORIGINS:http://localhost:5173}
   upload-dir: /app/uploads
+  frontend-url: ${APP_FRONTEND_URL:http://localhost:5173}
   github:
     client-id: ${GITHUB_CLIENT_ID:}
     client-secret: ${GITHUB_CLIENT_SECRET:}
-    redirect-uri: ${GITHUB_REDIRECT_URI}
+    redirect-uri: ${GITHUB_REDIRECT_URI:http://localhost:8080/api/v1/github/callback}
   encryption-key: ${ENCRYPTION_KEY}
   ai-service-url: ${AI_SERVICE_URL:http://ai-service:8000}

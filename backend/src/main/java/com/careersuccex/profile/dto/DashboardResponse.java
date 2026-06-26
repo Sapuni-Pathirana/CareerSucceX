@@ -13,9 +13,13 @@ public class DashboardResponse {
     private ReadinessSummary readiness;
     private BigDecimal cvScore;
     private BigDecimal githubScore;
+    private BigDecimal skillsScore;
     private BigDecimal interviewScore;
+    private BigDecimal verificationScore;
     private int skillGapCount;
     private int verifiedSkillsCount;
+    private int verifiedRequiredCount;
+    private int requiredSkillsCount;
     private List<ActivityItem> recentActivity;
 
     @Data

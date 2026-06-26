@@ -4,11 +4,13 @@ import com.careersuccex.auth.security.SecurityUtils;
 import com.careersuccex.github.dto.GitHubDtos;
 import com.careersuccex.github.service.GitHubService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -20,6 +22,9 @@ public class GitHubController {
     private final GitHubService gitHubService;
     private final SecurityUtils securityUtils;
 
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
+
     @GetMapping("/connect")
     public Map<String, String> connect() {
         String url = gitHubService.getConnectUrl(securityUtils.getCurrentUserId());
@@ -30,7 +35,7 @@ public class GitHubController {
     public ResponseEntity<Void> callback(@RequestParam String code, @RequestParam UUID state) {
         gitHubService.handleCallback(code, state);
         HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(URI.create("http://localhost:5173/github?connected=true"));
+        headers.setLocation(URI.create(frontendUrl + "/analyze?connected=true#github-analysis"));
         return ResponseEntity.status(302).headers(headers).build();
     }
 
@@ -42,6 +47,11 @@ public class GitHubController {
     @PostMapping("/analyze")
     public GitHubDtos.AnalyzeResponse analyze() {
         return gitHubService.analyze(securityUtils.getCurrentUserId());
+    }
+
+    @GetMapping("/analyses")
+    public List<GitHubDtos.AnalysisResponse> listAnalyses() {
+        return gitHubService.listAnalyses(securityUtils.getCurrentUserId());
     }
 
     @GetMapping("/analyses/latest")

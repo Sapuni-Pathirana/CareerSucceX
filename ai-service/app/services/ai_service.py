@@ -24,7 +24,7 @@ from app.models.schemas import (
     SummarizeInterviewRequest,
     SummarizeInterviewResponse,
 )
-from app.services import gemini as gemini_service
+from app.services import llm as llm_service
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ def _section_present(text: str, keywords: list[str]) -> bool:
 
 
 def enrich_cv(request: CvEnrichRequest) -> CvEnrichResponse:
-    if gemini_service.is_gemini_enabled():
+    if llm_service.is_llm_enabled():
         result = _enrich_cv_gemini(request)
         if result:
             return result
@@ -116,7 +116,7 @@ Return JSON with keys:
 
 CV:
 {request.cv_text[:12000]}"""
-    data = gemini_service.generate_json(prompt)
+    data = llm_service.generate_json(prompt)
     if not isinstance(data, dict):
         return None
     return CvEnrichResponse(
@@ -192,7 +192,7 @@ def _extract_bullet_lines(text: str, section_hints: list[str]) -> list[str]:
 
 
 def match_ats_keywords(request: AtsKeywordRequest) -> AtsKeywordResponse:
-    if gemini_service.is_gemini_enabled():
+    if llm_service.is_llm_enabled():
         result = _ats_keywords_gemini(request)
         if result:
             return result
@@ -208,7 +208,7 @@ Required keywords: {json.dumps(request.required_keywords)}
 
 CV:
 {request.cv_text[:12000]}"""
-    data = gemini_service.generate_json(prompt)
+    data = llm_service.generate_json(prompt)
     if not isinstance(data, dict):
         return None
     matched = data.get("matched") or []
@@ -240,7 +240,7 @@ def _ats_keywords_fallback(request: AtsKeywordRequest) -> AtsKeywordResponse:
 
 
 def generate_questions(request: GenerateQuestionsRequest) -> GenerateQuestionsResponse:
-    if gemini_service.is_gemini_enabled():
+    if llm_service.is_llm_enabled():
         result = _questions_gemini(request)
         if result:
             return result
@@ -255,7 +255,7 @@ Target role: {request.target_role}
 Interview type: {request.interview_type}
 Difficulty: {request.difficulty}
 Profile: {request.profile_summary[:2000]}"""
-    data = gemini_service.generate_json(prompt)
+    data = llm_service.generate_json(prompt)
     if not isinstance(data, dict):
         return None
     items = []
@@ -298,7 +298,7 @@ def _questions_fallback(request: GenerateQuestionsRequest) -> GenerateQuestionsR
 
 
 def evaluate_answer(request: EvaluateAnswerRequest) -> EvaluateAnswerResponse:
-    if gemini_service.is_gemini_enabled():
+    if llm_service.is_llm_enabled():
         result = _evaluate_gemini(request)
         if result:
             return result
@@ -311,7 +311,7 @@ Return JSON with score (0-100) and feedback object with keys: strengths (array),
 
 Question ({request.question_type}): {request.question}
 Answer: {request.answer[:4000]}"""
-    data = gemini_service.generate_json(prompt)
+    data = llm_service.generate_json(prompt)
     if not isinstance(data, dict):
         return None
     return EvaluateAnswerResponse(
@@ -351,13 +351,13 @@ def _evaluate_fallback(request: EvaluateAnswerRequest) -> EvaluateAnswerResponse
     feedback: dict[str, Any] = {
         "strengths": strengths or ["Answer recorded for review."],
         "improvements": improvements or ["Add a concrete example with measurable outcome."],
-        "comment": "Rule-based evaluation — enable GEMINI_API_KEY for AI feedback.",
+        "comment": "Rule-based evaluation — configure an AI provider in .env for AI feedback.",
     }
     return EvaluateAnswerResponse(score=_round_score(score), feedback=feedback)
 
 
 def summarize_interview(request: SummarizeInterviewRequest) -> SummarizeInterviewResponse:
-    if gemini_service.is_gemini_enabled():
+    if llm_service.is_llm_enabled():
         result = _summarize_gemini(request)
         if result:
             return result
@@ -369,7 +369,7 @@ def _summarize_gemini(request: SummarizeInterviewRequest) -> SummarizeInterviewR
 Return JSON with overallScore (0-100), summary (string), tips (array of strings).
 
 Q&A pairs: {json.dumps(request.qa_pairs)[:8000]}"""
-    data = gemini_service.generate_json(prompt)
+    data = llm_service.generate_json(prompt)
     if not isinstance(data, dict):
         return None
     return SummarizeInterviewResponse(
@@ -408,7 +408,7 @@ def _summarize_fallback(request: SummarizeInterviewRequest) -> SummarizeIntervie
 
 
 def generate_roadmap(request: GenerateRoadmapRequest) -> GenerateRoadmapResponse:
-    if gemini_service.is_gemini_enabled():
+    if llm_service.is_llm_enabled():
         result = _roadmap_gemini(request)
         if result:
             return result
@@ -421,7 +421,7 @@ Return JSON: {{ "items": [{{ "itemType": "LEARN|PROJECT|INTERVIEW|VERIFY", "titl
 
 Skill gaps: {request.skill_gaps}
 Weak areas: {request.weak_areas}"""
-    data = gemini_service.generate_json(prompt)
+    data = llm_service.generate_json(prompt)
     if not isinstance(data, dict):
         return None
     items = []
@@ -503,7 +503,7 @@ def _roadmap_fallback(request: GenerateRoadmapRequest) -> GenerateRoadmapRespons
 
 
 def generate_quiz(request: GenerateQuizRequest) -> GenerateQuizResponse:
-    if gemini_service.is_gemini_enabled():
+    if llm_service.is_llm_enabled():
         result = _quiz_gemini(request)
         if result:
             return result
@@ -514,7 +514,7 @@ def _quiz_gemini(request: GenerateQuizRequest) -> GenerateQuizResponse | None:
     prompt = f"""Generate {request.question_count} MCQ quiz questions to verify {request.skill_name} skill.
 Return JSON: {{ "questions": [{{ "id": "1", "type": "MCQ", "question": "...", "options": ["A","B","C","D"], "correctIndex": 0 }}] }}
 Include correctIndex in each question for grading (backend stores full payload)."""
-    data = gemini_service.generate_json(prompt)
+    data = llm_service.generate_json(prompt)
     if not isinstance(data, dict):
         return None
     questions = []
@@ -562,7 +562,7 @@ def _quiz_fallback(request: GenerateQuizRequest) -> GenerateQuizResponse:
 
 
 def grade_quiz(request: GradeQuizRequest) -> GradeQuizResponse:
-    if gemini_service.is_gemini_enabled():
+    if llm_service.is_llm_enabled():
         result = _grade_gemini(request)
         if result:
             return result
@@ -575,7 +575,7 @@ Return JSON with score (0-100), passed (boolean, pass if score >= 70), feedback 
 
 Questions: {json.dumps(request.questions)[:6000]}
 Answers: {json.dumps(request.answers)[:6000]}"""
-    data = gemini_service.generate_json(prompt)
+    data = llm_service.generate_json(prompt)
     if not isinstance(data, dict):
         return None
     score = _round_score(float(data.get("score", 0)))

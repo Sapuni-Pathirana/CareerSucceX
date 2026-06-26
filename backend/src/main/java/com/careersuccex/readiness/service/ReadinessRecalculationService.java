@@ -43,6 +43,14 @@ public class ReadinessRecalculationService {
     private final JsonUtil jsonUtil;
     private final StringRedisTemplate redis;
 
+    public BigDecimal computeVerificationScore(UUID userId) {
+        return computeVerificationScoreInternal(userId);
+    }
+
+    public BigDecimal computeSkillsScore(UUID userId) {
+        return computeSkillsScoreInternal(userId);
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ReadinessScore recalculate(UUID userId) {
         BigDecimal cvScore = cvAnalysisRepository.findByCvDocumentUserIdOrderByAnalyzedAtDesc(userId)
@@ -50,8 +58,8 @@ public class ReadinessRecalculationService {
         BigDecimal githubScore = githubAnalysisRepository.findFirstByConnectionUserIdOrderByAnalyzedAtDesc(userId)
                 .map(a -> a.getOverallScore()).orElse(BigDecimal.ZERO);
         BigDecimal interviewScore = computeInterviewScore(userId);
-        BigDecimal skillsScore = computeSkillsScore(userId);
-        BigDecimal verificationScore = computeVerificationScore(userId);
+        BigDecimal skillsScore = computeSkillsScoreInternal(userId);
+        BigDecimal verificationScore = computeVerificationScoreInternal(userId);
 
         BigDecimal overall = cvScore.multiply(BigDecimal.valueOf(0.25))
                 .add(githubScore.multiply(BigDecimal.valueOf(0.20)))
@@ -105,7 +113,7 @@ public class ReadinessRecalculationService {
                 .divide(BigDecimal.valueOf(Math.min(3, sessions.size())), 2, RoundingMode.HALF_UP);
     }
 
-    private BigDecimal computeSkillsScore(UUID userId) {
+    private BigDecimal computeSkillsScoreInternal(UUID userId) {
         TargetRole role = profileRepository.findByUserId(userId)
                 .map(p -> p.getTargetRole()).orElse(null);
         if (role == null || role.getRequiredSkills() == null) return BigDecimal.ZERO;
@@ -119,7 +127,7 @@ public class ReadinessRecalculationService {
         return BigDecimal.valueOf(matched * 100.0 / required.size()).setScale(2, RoundingMode.HALF_UP);
     }
 
-    private BigDecimal computeVerificationScore(UUID userId) {
+    private BigDecimal computeVerificationScoreInternal(UUID userId) {
         TargetRole role = profileRepository.findByUserId(userId)
                 .map(p -> p.getTargetRole()).orElse(null);
         if (role == null || role.getRequiredSkills() == null) return BigDecimal.ZERO;

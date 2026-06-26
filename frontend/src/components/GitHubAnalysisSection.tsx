@@ -6,18 +6,22 @@ import { getErrorMessage } from '../api/client';
 import ErrorAlert from './ErrorAlert';
 import EmptyState from './EmptyState';
 import LoadingSpinner from './LoadingSpinner';
-import ScoreGauge from './ScoreGauge';
+import GitHubAnalysisResults from './GitHubAnalysisResults';
+import ConfirmDialog from './ConfirmDialog';
 import type { GitHubAnalysis, GitHubConnectionStatus } from '../types';
 
 export default function GitHubAnalysisSection() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [status, setStatus] = useState<GitHubConnectionStatus | null>(null);
-  const [analysis, setAnalysis] = useState<GitHubAnalysis | null>(null);
+  const [analyses, setAnalyses] = useState<GitHubAnalysis[]>([]);
+  const [selectedAnalysis, setSelectedAnalysis] = useState<GitHubAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [jobStatus, setJobStatus] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [disconnectOpen, setDisconnectOpen] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -26,12 +30,18 @@ export default function GitHubAnalysisSection() {
       const conn = await githubApi.getStatus();
       setStatus(conn);
       if (conn.connected) {
-        try {
-          const latest = await githubApi.getLatestAnalysis();
-          setAnalysis(latest);
-        } catch {
-          setAnalysis(null);
-        }
+        const hist = await githubApi.listAnalyses();
+        setAnalyses(hist);
+        setSelectedAnalysis((current) => {
+          if (current) {
+            const match = hist.find((a) => a.id === current.id);
+            if (match) return match;
+          }
+          return hist[0] ?? null;
+        });
+      } else {
+        setAnalyses([]);
+        setSelectedAnalysis(null);
       }
     } catch (err) {
       setError(getErrorMessage(err));
@@ -47,10 +57,16 @@ export default function GitHubAnalysisSection() {
       setSearchParams(searchParams, { replace: true });
     }
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const oauthReady = status?.oauthConfigured !== false;
+  const connected = status?.connected === true;
+  const username = status?.username;
 
   const handleConnect = async () => {
     setError('');
+    if (!oauthReady) return;
     try {
       await githubApi.connect();
     } catch (err) {
@@ -70,8 +86,7 @@ export default function GitHubAnalysisSection() {
       if (result.status === 'FAILED') {
         throw new Error(result.errorMessage || 'Analysis failed');
       }
-      const latest = await githubApi.getLatestAnalysis();
-      setAnalysis(latest);
+      await load();
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -80,125 +95,178 @@ export default function GitHubAnalysisSection() {
     }
   };
 
-  const handleDisconnect = async () => {
-    if (!confirm('Disconnect your GitHub account?')) return;
+  const confirmDisconnect = async () => {
+    setDisconnecting(true);
+    setError('');
     try {
       await githubApi.disconnect();
-      setStatus({ connected: false });
-      setAnalysis(null);
+      setStatus({ connected: false, oauthConfigured: status?.oauthConfigured });
+      setAnalyses([]);
+      setSelectedAnalysis(null);
+      setDisconnectOpen(false);
     } catch (err) {
       setError(getErrorMessage(err));
+    } finally {
+      setDisconnecting(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <LoadingSpinner size="lg" />
+      <div className="analytics-dash--loading py-12">
+        <LoadingSpinner size="lg" label="Loading GitHub status…" />
       </div>
     );
   }
 
+  const headerSubtitle = connected
+    ? username
+      ? `Connected as @${username}${
+          status?.lastSyncedAt
+            ? ` · Last synced ${new Date(status.lastSyncedAt).toLocaleString()}`
+            : ''
+        }`
+      : 'Portfolio strength from your repositories, README quality, and activity'
+    : oauthReady
+      ? 'Connect your GitHub account to analyze repositories, README quality, and activity'
+      : 'GitHub OAuth is not configured on this server';
+
   return (
     <div>
-      <p className="mb-4 text-sm text-slate-600">
-        Connect your GitHub to analyze your portfolio and coding activity
-      </p>
-
-      {error && (
-        <div className="mb-4">
-          <ErrorAlert message={error} />
+      <div className="analytics-card__head analytics-card__head--row">
+        <div>
+          <h2 className="analytics-card__title">GitHub Analysis</h2>
+          <p className="analytics-card__subtitle">{headerSubtitle}</p>
         </div>
-      )}
-      {success && (
-        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          {success}
-        </div>
-      )}
-      {analyzing && jobStatus && (
-        <div className="mb-4 flex items-center gap-3 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800">
-          <LoadingSpinner size="sm" />
-          {jobStatus}
-        </div>
-      )}
-
-      <div className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        {status?.connected ? (
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-slate-500">Connected as</p>
-              <p className="text-lg font-semibold text-slate-900">@{status.username}</p>
-              {status.lastSyncedAt && (
-                <p className="text-xs text-slate-500">
-                  Last synced {new Date(status.lastSyncedAt).toLocaleString()}
-                </p>
-              )}
-            </div>
-            <div className="flex gap-2">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          {connected ? (
+            <>
               <button
                 type="button"
                 onClick={handleAnalyze}
                 disabled={analyzing}
-                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+                className="btn-aurora analytics-btn-interactive rounded-lg px-4 py-2 text-sm disabled:opacity-60"
               >
                 {analyzing ? 'Analyzing...' : 'Run Analysis'}
               </button>
               <button
                 type="button"
-                onClick={handleDisconnect}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                onClick={() => setDisconnectOpen(true)}
+                className="analytics-btn-ghost rounded-lg px-4 py-2 text-sm"
               >
                 Disconnect
               </button>
-            </div>
-          </div>
-        ) : (
-          <EmptyState
-            title="GitHub not connected"
-            description="Connect your GitHub account to analyze your repositories and activity"
-            action={
-              <button
-                type="button"
-                onClick={handleConnect}
-                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-              >
-                Connect GitHub
-              </button>
-            }
-          />
-        )}
+            </>
+          ) : oauthReady ? (
+            <button
+              type="button"
+              onClick={handleConnect}
+              className="btn-aurora analytics-btn-interactive rounded-lg px-4 py-2 text-sm"
+            >
+              Connect GitHub
+            </button>
+          ) : null}
+        </div>
       </div>
 
-      {analysis && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-col items-center gap-6 sm:flex-row">
-            <ScoreGauge score={Number(analysis.overallScore)} label="Overall Score" />
-            <div className="grid flex-1 grid-cols-3 gap-4">
-              <div className="rounded-lg bg-slate-50 p-4 text-center">
-                <p className="text-2xl font-bold text-slate-900">
-                  {Math.round(Number(analysis.activityScore))}
-                </p>
-                <p className="text-xs text-slate-500">Activity</p>
-              </div>
-              <div className="rounded-lg bg-slate-50 p-4 text-center">
-                <p className="text-2xl font-bold text-slate-900">
-                  {Math.round(Number(analysis.readmeScore))}
-                </p>
-                <p className="text-xs text-slate-500">README</p>
-              </div>
-              <div className="rounded-lg bg-slate-50 p-4 text-center">
-                <p className="text-2xl font-bold text-slate-900">
-                  {Math.round(Number(analysis.diversityScore))}
-                </p>
-                <p className="text-xs text-slate-500">Diversity</p>
-              </div>
-            </div>
-          </div>
-          <p className="mt-4 text-xs text-slate-500">
-            Analyzed {new Date(analysis.analyzedAt).toLocaleString()}
-          </p>
+      {error && oauthReady && (
+        <div className="mb-4">
+          <ErrorAlert message={error} theme="dark" />
         </div>
       )}
+      {success && (
+        <div className="analytics-banner analytics-banner--success mb-4">{success}</div>
+      )}
+      {analyzing && jobStatus && (
+        <div className="analytics-banner analytics-banner--info mb-4">
+          <LoadingSpinner size="sm" />
+          {jobStatus}
+        </div>
+      )}
+
+      {!connected ? (
+        <EmptyState
+          theme="dark"
+          title={oauthReady ? 'GitHub not connected' : 'GitHub connect unavailable'}
+          description={
+            oauthReady
+              ? 'Each user connects their own GitHub account. Once connected, run an analysis to see portfolio scores and tips.'
+              : 'An administrator must set GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, and GITHUB_REDIRECT_URI so users can connect their own accounts.'
+          }
+          action={
+            oauthReady ? (
+              <button type="button" onClick={handleConnect} className="btn-aurora rounded-lg px-4 py-2 text-sm">
+                Connect GitHub
+              </button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <div className="cv-analysis-grid">
+          <aside className="cv-analysis-sidebar">
+            <h3 className="analytics-analyze-section-title">Analysis History</h3>
+            {analyses.length === 0 ? (
+              <EmptyState
+                theme="dark"
+                title="No analyses yet"
+                description="Run your first GitHub analysis to see portfolio scores"
+              />
+            ) : (
+              <ul className="cv-history-list mt-3 space-y-2">
+                {analyses.map((a) => (
+                  <li
+                    key={a.id}
+                    className={`cv-history-item cv-history-item--no-actions ${
+                      selectedAnalysis?.id === a.id ? 'cv-history-item--active' : ''
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setSelectedAnalysis(a)}
+                      className="cv-history-item__body"
+                    >
+                      <span className="cv-history-item__score">
+                        Score {Math.round(Number(a.overallScore))}
+                      </span>
+                      <span className="cv-history-item__filename" title={username ? `@${username}` : 'GitHub'}>
+                        {username ? `@${username}` : 'GitHub'}
+                      </span>
+                      <span className="cv-history-item__date">
+                        {new Date(a.analyzedAt).toLocaleDateString()}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </aside>
+
+          <div className="cv-analysis-main">
+            {selectedAnalysis ? (
+              <GitHubAnalysisResults key={selectedAnalysis.id} analysis={selectedAnalysis} />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <EmptyState
+                  theme="dark"
+                  title="No analysis selected"
+                  description="Run an analysis or select an entry from history"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={disconnectOpen}
+        title="Disconnect GitHub?"
+        description="Your GitHub connection will be removed. Past analyses stay in history until you reconnect and run new ones."
+        confirmLabel="Disconnect"
+        cancelLabel="Keep connected"
+        loading={disconnecting}
+        onConfirm={() => void confirmDisconnect()}
+        onCancel={() => !disconnecting && setDisconnectOpen(false)}
+      />
     </div>
   );
 }

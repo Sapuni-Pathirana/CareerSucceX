@@ -96,6 +96,7 @@ public class VerificationService {
 
         verification.setScore(grade.getScore());
         verification.setPassed(grade.isPassed());
+        verification.setVerifiedAt(java.time.Instant.now());
         verification.setAnswersJson(jsonUtil.toJson(Map.of("answers", request.getAnswers(), "feedback", grade.getFeedback())));
         verificationRepository.save(verification);
         pendingQuizzes.remove(verificationId);

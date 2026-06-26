@@ -54,9 +54,13 @@ export interface DashboardResponse {
   };
   cvScore?: number;
   githubScore?: number;
+  skillsScore?: number;
   interviewScore?: number;
+  verificationScore?: number;
   skillGapCount: number;
   verifiedSkillsCount: number;
+  verifiedRequiredCount?: number;
+  requiredSkillsCount?: number;
   recentActivity: ActivityItem[];
 }
 
@@ -93,6 +97,8 @@ export interface CvScoreBreakdown {
 
 export interface CvAnalysis {
   id: string;
+  documentId?: string;
+  fileName?: string;
   atsScore: number;
   breakdown: CvScoreBreakdown;
   keywordReport: Record<string, string[]>;
@@ -117,6 +123,7 @@ export interface JobStatusResponse {
 
 export interface GitHubConnectionStatus {
   connected: boolean;
+  oauthConfigured?: boolean;
   username?: string;
   lastSyncedAt?: string;
 }
@@ -127,6 +134,13 @@ export interface GitHubAnalysis {
   activityScore: number;
   readmeScore: number;
   diversityScore: number;
+  languageStats?: Record<string, number>;
+  repoStats?: {
+    count?: number;
+    stars?: number;
+    languages?: number;
+  };
+  recommendations?: string[];
   analyzedAt: string;
 }
 

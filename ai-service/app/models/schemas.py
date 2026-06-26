@@ -133,4 +133,6 @@ class GradeQuizResponse(CamelModel):
 
 class HealthResponse(CamelModel):
     status: str
-    gemini_enabled: bool = Field(alias="geminiEnabled")
+    ai_provider: str = Field(default="none", alias="aiProvider")
+    ai_enabled: bool = Field(default=False, alias="aiEnabled")
+    gemini_enabled: bool = Field(default=False, alias="geminiEnabled")

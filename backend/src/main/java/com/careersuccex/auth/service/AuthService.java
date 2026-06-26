@@ -94,6 +94,7 @@ public class AuthService {
         });
     }
 
+    @Transactional(readOnly = true)
     public UserResponse getCurrentUser(User user) {
         UserProfile profile = profileRepository.findByUserId(user.getId()).orElse(null);
         UserResponse.ProfileSummary summary = null;

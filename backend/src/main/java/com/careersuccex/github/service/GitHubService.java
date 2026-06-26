@@ -8,6 +8,8 @@ import com.careersuccex.common.service.AnalysisAsyncExecutor;
 import com.careersuccex.common.service.AnalysisJobService;
 import com.careersuccex.common.service.RateLimitService;
 import com.careersuccex.common.util.EncryptionUtil;
+import com.careersuccex.common.util.JsonUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.careersuccex.github.dto.GitHubDtos;
 import com.careersuccex.github.entity.GitHubAnalysis;
 import com.careersuccex.github.entity.GitHubConnection;
@@ -23,6 +25,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -38,6 +41,7 @@ public class GitHubService {
     private final AnalysisJobService jobService;
     private final RateLimitService rateLimitService;
     private final AnalysisAsyncExecutor analysisAsyncExecutor;
+    private final JsonUtil jsonUtil;
 
     @Value("${app.github.client-id:}")
     private String clientId;
@@ -49,8 +53,11 @@ public class GitHubService {
     private String redirectUri;
 
     public String getConnectUrl(UUID userId) {
-        if (clientId == null || clientId.isBlank()) {
+        if (!isOAuthConfigured()) {
             throw new ApiException("GitHub OAuth not configured", HttpStatus.SERVICE_UNAVAILABLE);
+        }
+        if (!userRepository.existsById(userId)) {
+            throw new ApiException("User not found", HttpStatus.NOT_FOUND);
         }
         return UriComponentsBuilder.fromUriString("https://github.com/login/oauth/authorize")
                 .queryParam("client_id", clientId)
@@ -62,15 +69,20 @@ public class GitHubService {
 
     @Transactional
     public void handleCallback(String code, UUID userId) {
+        if (!isOAuthConfigured()) {
+            throw new ApiException("GitHub OAuth not configured", HttpStatus.SERVICE_UNAVAILABLE);
+        }
         String token = exchangeCodeForToken(code);
         JsonNode userNode = fetchGitHubUser(token);
-        User user = userRepository.findById(userId).orElseThrow();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND));
         GitHubConnection conn = connectionRepository.findByUserId(userId)
                 .orElse(GitHubConnection.builder().user(user).build());
         conn.setGithubUserId(userNode.get("id").asLong());
         conn.setGithubUsername(userNode.get("login").asText());
         conn.setAccessTokenEnc(encryptionUtil.encrypt(token));
         conn.setConnectedAt(Instant.now());
+        conn.setLastSyncedAt(Instant.now());
         connectionRepository.save(conn);
     }
 
@@ -94,19 +106,36 @@ public class GitHubService {
         return toResponse(a);
     }
 
+    public List<GitHubDtos.AnalysisResponse> listAnalyses(UUID userId) {
+        return analysisRepository.findByConnectionUserIdOrderByAnalyzedAtDesc(userId).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     @Transactional
     public void disconnect(UUID userId) {
         connectionRepository.findByUserId(userId).ifPresent(connectionRepository::delete);
     }
 
     public GitHubDtos.ConnectionStatus getStatus(UUID userId) {
+        boolean oauthConfigured = isOAuthConfigured();
         return connectionRepository.findByUserId(userId)
                 .map(c -> GitHubDtos.ConnectionStatus.builder()
                         .connected(true)
+                        .oauthConfigured(oauthConfigured)
                         .username(c.getGithubUsername())
                         .lastSyncedAt(c.getLastSyncedAt())
                         .build())
-                .orElse(GitHubDtos.ConnectionStatus.builder().connected(false).build());
+                .orElse(GitHubDtos.ConnectionStatus.builder()
+                        .connected(false)
+                        .oauthConfigured(oauthConfigured)
+                        .build());
+    }
+
+    private boolean isOAuthConfigured() {
+        return clientId != null && !clientId.isBlank()
+                && clientSecret != null && !clientSecret.isBlank()
+                && redirectUri != null && !redirectUri.isBlank();
     }
 
     private String exchangeCodeForToken(String code) {
@@ -129,12 +158,30 @@ public class GitHubService {
     }
 
     private GitHubDtos.AnalysisResponse toResponse(GitHubAnalysis a) {
+        Map<String, Object> languageStats = Map.of();
+        Map<String, Object> repoStats = Map.of();
+        List<String> recommendations = List.of();
+        try {
+            if (a.getLanguageStats() != null) {
+                languageStats = jsonUtil.fromJson(a.getLanguageStats(), new TypeReference<>() {});
+            }
+            if (a.getRepoStats() != null) {
+                repoStats = jsonUtil.fromJson(a.getRepoStats(), new TypeReference<>() {});
+            }
+            if (a.getRecommendations() != null) {
+                recommendations = jsonUtil.fromJson(a.getRecommendations(), new TypeReference<>() {});
+            }
+        } catch (Exception ignored) {}
+
         return GitHubDtos.AnalysisResponse.builder()
                 .id(a.getId())
                 .overallScore(a.getOverallScore())
                 .activityScore(a.getActivityScore())
                 .readmeScore(a.getReadmeScore())
                 .diversityScore(a.getDiversityScore())
+                .languageStats(languageStats)
+                .repoStats(repoStats)
+                .recommendations(recommendations)
                 .analyzedAt(a.getAnalyzedAt())
                 .build();
     }

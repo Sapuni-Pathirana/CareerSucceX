@@ -8,13 +8,6 @@ interface ScoreGaugeProps {
   variant?: 'default' | 'hero';
 }
 
-function scoreColor(value: number, variant: 'default' | 'hero') {
-  if (value >= 75) return variant === 'hero' ? '#00B1B1' : '#008080';
-  if (value >= 50) return '#008080';
-  if (value >= 25) return variant === 'hero' ? '#114852' : '#0B262B';
-  return '#5a8885';
-}
-
 export default function ScoreGauge({
   score,
   label,
@@ -32,11 +25,9 @@ export default function ScoreGauge({
   const circumference = 2 * Math.PI * radius;
   const clamped = Math.min(100, Math.max(0, displayed));
   const offset = circumference - (clamped / 100) * circumference;
-  const color = scoreColor(clamped, variant);
-  const useGradient = clamped >= 50 && variant === 'default';
 
   const gradId = `${uid}-grad`;
-  const glowId = `${uid}-glow`;
+  const strokeFill = `url(#${gradId})`;
   const softGlowId = `${uid}-soft-glow`;
   const strokeWidth = variant === 'hero' ? 12 : 10;
   const isHero = variant === 'hero';
@@ -71,23 +62,24 @@ export default function ScoreGauge({
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <svg ref={ref} width={size} height={size} viewBox="0 0 130 130">
+      <svg
+        ref={ref}
+        width={size}
+        height={size}
+        viewBox="0 0 130 130"
+        style={{ shapeRendering: 'geometricPrecision' }}
+      >
         <defs>
           <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#114852" />
             <stop offset="50%" stopColor="#008080" />
             <stop offset="100%" stopColor="#00B1B1" />
           </linearGradient>
-          <filter id={glowId} x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <filter id={softGlowId} x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2.5" />
-          </filter>
+          {isHero && (
+            <filter id={softGlowId} x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2.5" />
+            </filter>
+          )}
         </defs>
 
         <circle
@@ -105,7 +97,7 @@ export default function ScoreGauge({
             cy="65"
             r={radius}
             fill="none"
-            stroke={color}
+            stroke={strokeFill}
             strokeWidth={strokeWidth + 3}
             strokeLinecap="round"
             strokeDasharray={circumference}
@@ -121,13 +113,12 @@ export default function ScoreGauge({
           cy="65"
           r={radius}
           fill="none"
-          stroke={useGradient ? `url(#${gradId})` : color}
+          stroke={strokeFill}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           transform="rotate(-90 65 65)"
-          filter={isHero ? undefined : `url(#${glowId})`}
           style={{ transition: 'stroke-dashoffset 0.05s linear' }}
         />
 

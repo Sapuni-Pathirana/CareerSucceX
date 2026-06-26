@@ -18,7 +18,10 @@ import com.careersuccex.skills.repository.TargetRoleRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -125,6 +128,7 @@ public class CvService {
     public List<CvDtos.CvAnalysisResponse> listAnalyses(UUID userId) {
         return analysisRepository.findByCvDocumentUserIdOrderByAnalyzedAtDesc(userId)
                 .stream()
+                .filter(a -> a.getCvDocument() != null && Boolean.TRUE.equals(a.getCvDocument().getIsActive()))
                 .filter(a -> a.getAtsScore() != null && a.getAnalyzedAt() != null)
                 .map(this::toAnalysisResponse)
                 .toList();
@@ -138,6 +142,24 @@ public class CvService {
         doc.setIsActive(false);
         documentRepository.save(doc);
     }
+
+    @Transactional(readOnly = true)
+    public CvDocumentDownload downloadDocument(UUID userId, UUID documentId) {
+        CvDocument doc = documentRepository.findById(documentId)
+                .filter(d -> d.getUser().getId().equals(userId))
+                .filter(d -> Boolean.TRUE.equals(d.getIsActive()))
+                .orElseThrow(() -> new ApiException("Document not found", HttpStatus.NOT_FOUND));
+        Path path = Paths.get(doc.getFilePath());
+        if (!Files.exists(path)) {
+            throw new ApiException("File not found on server", HttpStatus.NOT_FOUND);
+        }
+        String contentType = "PDF".equalsIgnoreCase(doc.getFileType())
+                ? MediaType.APPLICATION_PDF_VALUE
+                : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        return new CvDocumentDownload(new FileSystemResource(path), doc.getFileName(), contentType);
+    }
+
+    public record CvDocumentDownload(Resource resource, String fileName, String contentType) {}
 
     private CvDtos.CvDocumentResponse toDocumentResponse(CvDocument doc) {
         return CvDtos.CvDocumentResponse.builder()
@@ -167,6 +189,8 @@ public class CvService {
 
         return CvDtos.CvAnalysisResponse.builder()
                 .id(a.getId())
+                .documentId(a.getCvDocument().getId())
+                .fileName(a.getCvDocument().getFileName())
                 .atsScore(a.getAtsScore())
                 .breakdown(CvDtos.ScoreBreakdown.builder()
                         .keywordScore(a.getKeywordScore())

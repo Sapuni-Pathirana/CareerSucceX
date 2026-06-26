@@ -14,21 +14,23 @@ export default function AnalyzePage() {
   }, [location.hash]);
 
   return (
-    <div>
+    <div className="analytics-dash">
       <PageHeader
+        theme="dark"
+        badge="Career insights"
         title="Analyze"
         description="Upload your CV and connect GitHub to measure your career readiness"
       />
 
-      <section id="cv-analysis" className="mb-10 scroll-mt-24">
-        <h2 className="mb-4 text-xl font-semibold text-slate-900">CV Analysis</h2>
-        <CvAnalysisSection />
-      </section>
+      <div className="analytics-analyze-layout">
+        <section id="cv-analysis" className="analytics-card scroll-mt-24">
+          <CvAnalysisSection />
+        </section>
 
-      <section id="github-analysis" className="scroll-mt-24">
-        <h2 className="mb-4 text-xl font-semibold text-slate-900">GitHub Analysis</h2>
-        <GitHubAnalysisSection />
-      </section>
+        <section id="github-analysis" className="analytics-card scroll-mt-24">
+          <GitHubAnalysisSection />
+        </section>
+      </div>
     </div>
   );
 }

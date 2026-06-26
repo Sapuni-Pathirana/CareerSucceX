@@ -3,7 +3,7 @@ type EarningsGaugeProps = {
   label?: string;
 };
 
-export default function EarningsGauge({ value, label = '80%' }: EarningsGaugeProps) {
+export default function EarningsGauge({ value, label }: EarningsGaugeProps) {
   const pct = Math.min(100, Math.max(0, value));
   const angle = (pct / 100) * 180;
   const rad = (deg: number) => (deg * Math.PI) / 180;
@@ -44,7 +44,9 @@ export default function EarningsGauge({ value, label = '80%' }: EarningsGaugePro
         />
         <circle cx={cx} cy={cy} r="4" fill="#008080" />
       </svg>
-      <p className="analytics-gauge__value">{label}</p>
+      {label != null && label !== '' && (
+        <p className="analytics-gauge__value">{label}</p>
+      )}
     </div>
   );
 }

@@ -1,11 +1,18 @@
 from fastapi import APIRouter
 
 from app.models.schemas import HealthResponse
-from app.services import gemini
+from app.services import llm
 
 router = APIRouter(tags=["health"])
 
 
 @router.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
-    return HealthResponse(status="ok", geminiEnabled=gemini.is_gemini_enabled())
+    provider = llm.get_provider()
+    enabled = llm.is_llm_enabled()
+    return HealthResponse(
+        status="ok",
+        aiProvider=provider,
+        aiEnabled=enabled,
+        geminiEnabled=provider == "gemini" and enabled,
+    )

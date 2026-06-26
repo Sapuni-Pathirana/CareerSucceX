@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Area,
   AreaChart,
@@ -51,6 +52,13 @@ function progressTone(index: number) {
   return ['orange', 'teal', 'blue', 'pink'][index % 4] as 'orange' | 'teal' | 'blue' | 'pink';
 }
 
+const barColors: Record<ReturnType<typeof progressTone>, string> = {
+  orange: '#008080',
+  teal: '#008080',
+  blue: '#00B1B1',
+  pink: '#00B1B1',
+};
+
 function formatScoreDelta(current: number, previous?: number) {
   if (previous == null) return 'Run an assessment to track change';
   const delta = current - previous;
@@ -67,6 +75,7 @@ function readinessStatus(overall: number) {
 }
 
 export default function DashboardPage() {
+  const location = useLocation();
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [score, setScore] = useState<ReadinessScore | null>(null);
   const [history, setHistory] = useState<ReadinessHistoryPoint[]>([]);
@@ -74,6 +83,9 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (location.pathname !== '/dashboard') return;
+
+    let cancelled = false;
     (async () => {
       setLoading(true);
       setError('');
@@ -83,16 +95,21 @@ export default function DashboardPage() {
           readinessApi.getScore().catch(() => null),
           readinessApi.getHistory().catch(() => []),
         ]);
+        if (cancelled) return;
         setDashboard(dash);
         setScore(s);
         setHistory(hist);
       } catch (err) {
-        setError(getErrorMessage(err));
+        if (!cancelled) setError(getErrorMessage(err));
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname, location.key]);
 
   if (loading) {
     return (
@@ -102,7 +119,11 @@ export default function DashboardPage() {
     );
   }
 
-  const fmt = (v?: number | null) => (v != null && !Number.isNaN(Number(v)) ? Math.round(Number(v)) : 0);
+  const fmt = (v?: number | string | null) => {
+    if (v == null || v === '') return 0;
+    const n = Number(v);
+    return Number.isFinite(n) ? Math.min(100, Math.max(0, Math.round(n))) : 0;
+  };
   const overall = fmt(score?.overallScore ?? dashboard?.readiness?.overallScore);
   const breakdown = score?.breakdown ?? {};
 
@@ -116,8 +137,8 @@ export default function DashboardPage() {
   const cvScore = fmt(breakdown.cv ?? dashboard?.cvScore);
   const githubScore = fmt(breakdown.github ?? dashboard?.githubScore);
   const interviewScore = fmt(breakdown.interview ?? dashboard?.interviewScore);
-  const skillsScore = fmt(breakdown.skills);
-  const verificationScore = fmt(breakdown.verification);
+  const skillsScore = fmt(breakdown.skills ?? dashboard?.skillsScore);
+  const verificationScore = fmt(breakdown.verification ?? dashboard?.verificationScore);
 
   const scoreRows = BREAKDOWN_ORDER.map((key, i) => {
     const value =
@@ -159,6 +180,14 @@ export default function DashboardPage() {
   const previousPeriodScore = prevOverall ?? overall;
   const skillGaps = dashboard?.skillGapCount ?? 0;
   const verifiedCount = dashboard?.verifiedSkillsCount ?? 0;
+  const verifiedRequired = dashboard?.verifiedRequiredCount ?? 0;
+  const requiredSkills = dashboard?.requiredSkillsCount ?? 0;
+
+  const verificationTrend = verifiedCount === 0
+    ? 'Complete a skill quiz on Skills to verify'
+    : requiredSkills > 0
+      ? `${verifiedRequired} of ${requiredSkills} required verified · ${verifiedCount} total`
+      : `${verifiedCount} skill${verifiedCount === 1 ? '' : 's'} verified`;
 
   const kpiCards = [
     {
@@ -181,11 +210,11 @@ export default function DashboardPage() {
     },
     {
       tone: 'blue' as const,
-      value: verifiedCount,
-      label: 'Verified Skills',
+      value: verificationScore,
+      label: 'Verification Score',
       trend: skillGaps > 0
-        ? `${skillGaps} skill gap${skillGaps === 1 ? '' : 's'} · ${verifiedCount} verified`
-        : `${verifiedCount} skill${verifiedCount === 1 ? '' : 's'} verified`,
+        ? `${skillGaps} skill gap${skillGaps === 1 ? '' : 's'} · ${verificationTrend}`
+        : verificationTrend,
     },
   ];
 
@@ -212,30 +241,16 @@ export default function DashboardPage() {
         </section>
 
         <section className="analytics-card analytics-card--level">
-          <h2 className="analytics-card__title">Score vs Target</h2>
-          <p className="analytics-card__subtitle">Current performance against job-ready benchmark</p>
-          <div className="analytics-chart analytics-chart--level">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={comparisonData} barGap={4} barCategoryGap="28%">
-                <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fill: '#7aaea9', fontSize: 10 }}
-                  axisLine={false}
-                  tickLine={false}
-                  interval={0}
-                />
-                <YAxis hide domain={[0, 100]} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="current" name="Current" fill="#008080" radius={[6, 6, 0, 0]} barSize={14} />
-                <Bar dataKey="target" name="Target" fill="rgba(255,255,255,0.08)" radius={[6, 6, 0, 0]} barSize={14} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="analytics-legend">
-            <span><i className="analytics-legend__dot analytics-legend__dot--teal" />Current</span>
-            <span><i className="analytics-legend__dot analytics-legend__dot--gray" />Target ({READINESS_TARGET})</span>
-          </div>
+          <h2 className="analytics-card__title">Overall Readiness</h2>
+          <p className="analytics-card__subtitle">Composite career readiness score</p>
+          <p className="analytics-earnings__hint">
+            {readinessStatus(overall)}
+            {prevOverall != null && prevOverall !== overall && (
+              <> · {formatScoreDelta(overall, prevOverall)}</>
+            )}
+          </p>
+          <EarningsGauge value={overall} />
+          <p className="analytics-earnings__value">{overall}%</p>
         </section>
 
         <section className="analytics-card analytics-card--products">
@@ -252,9 +267,18 @@ export default function DashboardPage() {
               <div key={row.id} className="analytics-table__row">
                 <span className="analytics-table__id">{row.id}</span>
                 <span className="analytics-table__name">{row.name}</span>
-                <div className="analytics-table__bar-wrap">
-                  <div className={`analytics-table__bar analytics-table__bar--${row.tone}`} style={{ width: `${row.progress}%` }} />
-                </div>
+                <div
+                  className="analytics-table__bar-wrap"
+                  style={{
+                    '--progress': `${row.progress}%`,
+                    '--bar-color': barColors[row.tone],
+                  } as CSSProperties}
+                  role="progressbar"
+                  aria-valuenow={row.progress}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`${row.name} progress`}
+                />
                 <span className={`analytics-table__pill analytics-table__pill--${row.tone}`}>{row.score}%</span>
               </div>
             ))}
@@ -264,9 +288,10 @@ export default function DashboardPage() {
         <section className="analytics-card analytics-card--fulfilment">
           <h2 className="analytics-card__title">Readiness Trend</h2>
           <p className="analytics-card__subtitle">Previous period compared with current readiness</p>
-          <div className="analytics-chart analytics-chart--fulfilment">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trendData}>
+          <div className="analytics-fulfilment-body">
+            <div className="analytics-chart analytics-chart--fulfilment">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={trendData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="fulfilTeal" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#008080" stopOpacity={0.35} />
@@ -298,19 +323,34 @@ export default function DashboardPage() {
               <strong>{overall}%</strong>
             </div>
           </div>
+          </div>
         </section>
 
         <section className="analytics-card analytics-card--earnings">
-          <h2 className="analytics-card__title">Overall Readiness</h2>
-          <p className="analytics-card__subtitle">Composite career readiness score</p>
-          <p className="analytics-earnings__value">{overall}%</p>
-          <p className="analytics-earnings__hint">
-            {readinessStatus(overall)}
-            {prevOverall != null && prevOverall !== overall && (
-              <> · {formatScoreDelta(overall, prevOverall)}</>
-            )}
-          </p>
-          <EarningsGauge value={overall} label={`${overall}%`} />
+          <h2 className="analytics-card__title">Score vs Target</h2>
+          <p className="analytics-card__subtitle">Current performance against job-ready benchmark</p>
+          <div className="analytics-chart analytics-chart--level">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={comparisonData} barGap={4} barCategoryGap="28%">
+                <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fill: '#7aaea9', fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                  interval={0}
+                />
+                <YAxis hide domain={[0, 100]} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey="current" name="Current" fill="#008080" radius={[6, 6, 0, 0]} barSize={14} />
+                <Bar dataKey="target" name="Target" fill="rgba(255,255,255,0.08)" radius={[6, 6, 0, 0]} barSize={14} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="analytics-legend">
+            <span><i className="analytics-legend__dot analytics-legend__dot--teal" />Current</span>
+            <span><i className="analytics-legend__dot analytics-legend__dot--gray" />Target ({READINESS_TARGET})</span>
+          </div>
         </section>
 
         <section className="analytics-card analytics-card--visitors">

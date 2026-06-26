@@ -21,6 +21,8 @@ public class CvDtos {
     @Builder
     public static class CvAnalysisResponse {
         private UUID id;
+        private UUID documentId;
+        private String fileName;
         private BigDecimal atsScore;
         private ScoreBreakdown breakdown;
         private Map<String, List<String>> keywordReport;

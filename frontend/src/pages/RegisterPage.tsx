@@ -8,7 +8,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 const features = [
   { title: 'CV Analysis', desc: 'AI-powered ATS score and feedback' },
   { title: 'GitHub Analytics', desc: 'Analyse your coding portfolio' },
-  { title: 'Mock Interviews', desc: 'Practice with Gemini AI' },
+  { title: 'Mock Interviews', desc: 'Practice with AI interviews' },
   { title: 'Skill Quizzes', desc: 'Earn verified skill badges' },
 ];
 

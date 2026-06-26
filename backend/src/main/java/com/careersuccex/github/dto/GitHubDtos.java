@@ -5,6 +5,8 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class GitHubDtos {
@@ -25,6 +27,9 @@ public class GitHubDtos {
         private BigDecimal activityScore;
         private BigDecimal readmeScore;
         private BigDecimal diversityScore;
+        private Map<String, Object> languageStats;
+        private Map<String, Object> repoStats;
+        private List<String> recommendations;
         private Instant analyzedAt;
     }
 
@@ -32,6 +37,7 @@ public class GitHubDtos {
     @Builder
     public static class ConnectionStatus {
         private boolean connected;
+        private boolean oauthConfigured;
         private String username;
         private Instant lastSyncedAt;
     }

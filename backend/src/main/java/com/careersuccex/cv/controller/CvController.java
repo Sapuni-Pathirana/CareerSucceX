@@ -4,6 +4,10 @@ import com.careersuccex.auth.security.SecurityUtils;
 import com.careersuccex.cv.dto.CvDtos;
 import com.careersuccex.cv.service.CvService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -48,5 +52,15 @@ public class CvController {
     @DeleteMapping("/documents/{id}")
     public void deleteDocument(@PathVariable UUID id) {
         cvService.deleteDocument(securityUtils.getCurrentUserId(), id);
+    }
+
+    @GetMapping("/documents/{id}/download")
+    public ResponseEntity<Resource> downloadDocument(@PathVariable UUID id) {
+        var download = cvService.downloadDocument(securityUtils.getCurrentUserId(), id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(download.contentType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"" + download.fileName().replace("\"", "") + "\"")
+                .body(download.resource());
     }
 }

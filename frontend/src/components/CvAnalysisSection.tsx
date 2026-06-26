@@ -6,12 +6,77 @@ import { getErrorMessage } from '../api/client';
 import ErrorAlert from './ErrorAlert';
 import EmptyState from './EmptyState';
 import LoadingSpinner from './LoadingSpinner';
-import ScoreGauge from './ScoreGauge';
+import CvAnalysisResults from './CvAnalysisResults';
+import CvDocumentPreview from './CvDocumentPreview';
+import ConfirmDialog from './ConfirmDialog';
 import type { CvAnalysis, CvDocument } from '../types';
+
+function EyeIcon({ className = 'h-4 w-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function TrashIcon({ className = 'h-4 w-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 6h18" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </svg>
+  );
+}
+
+function enrichAnalysis(analysis: CvAnalysis, documents: CvDocument[]): CvAnalysis {
+  let documentId = analysis.documentId;
+  let fileName = analysis.fileName;
+
+  if (documentId && !fileName) {
+    fileName = documents.find((doc) => doc.id === documentId)?.fileName;
+  }
+
+  if (!documentId && fileName) {
+    const matches = documents.filter((doc) => doc.fileName === fileName);
+    if (matches.length === 1) documentId = matches[0].id;
+  }
+
+  if (!documentId && documents.length === 1) {
+    documentId = documents[0].id;
+    fileName = fileName ?? documents[0].fileName;
+  }
+
+  return {
+    ...analysis,
+    documentId,
+    fileName,
+  };
+}
 
 export default function CvAnalysisSection() {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [documents, setDocuments] = useState<CvDocument[]>([]);
   const [analyses, setAnalyses] = useState<CvAnalysis[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<CvAnalysis | null>(null);
   const [targetRoleId, setTargetRoleId] = useState<string>('');
@@ -20,20 +85,45 @@ export default function CvAnalysisSection() {
   const [analyzing, setAnalyzing] = useState(false);
   const [jobStatus, setJobStatus] = useState('');
   const [error, setError] = useState('');
+  const [viewingDocumentId, setViewingDocumentId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{
+    url: string;
+    fileName: string;
+    isPdf: boolean;
+  } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    analysis: CvAnalysis;
+    documentId: string;
+    fileName: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const closePreview = () => {
+    setPreview((current) => {
+      if (current?.url) URL.revokeObjectURL(current.url);
+      return null;
+    });
+  };
 
   const load = async () => {
     setLoading(true);
     setError('');
     try {
-      const [docs, hist, profile] = await Promise.all([
-        cvApi.listDocuments(),
+      const [hist, docs, profile] = await Promise.all([
         cvApi.listAnalyses(),
+        cvApi.listDocuments().catch(() => [] as CvDocument[]),
         profileApi.get().catch(() => null),
       ]);
-      setDocuments(docs);
-      setAnalyses(hist);
+      const enriched = hist.map((analysis) => enrichAnalysis(analysis, docs));
+      setAnalyses(enriched);
       if (profile?.targetRoleId) setTargetRoleId(profile.targetRoleId);
-      if (hist.length > 0) setSelectedAnalysis(hist[0]);
+      setSelectedAnalysis((current) => {
+        if (current) {
+          const match = enriched.find((a) => a.id === current.id);
+          if (match) return match;
+        }
+        return enriched[0] ?? null;
+      });
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -43,23 +133,8 @@ export default function CvAnalysisSection() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    setError('');
-    try {
-      await cvApi.upload(file);
-      await load();
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = '';
-    }
-  };
 
   const handleAnalyze = async (documentId: string) => {
     setAnalyzing(true);
@@ -85,192 +160,234 @@ export default function CvAnalysisSection() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this CV document?')) return;
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError('');
     try {
-      await cvApi.deleteDocument(id);
+      const { documentId } = await cvApi.upload(file);
+      await handleAnalyze(documentId);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const handleView = async (documentId: string | undefined, fileName: string) => {
+    if (!documentId) {
+      setError('Document not found for this analysis.');
+      return;
+    }
+
+    setError('');
+    setViewingDocumentId(documentId);
+    setPreview((current) => {
+      if (current?.url) URL.revokeObjectURL(current.url);
+      return null;
+    });
+
+    try {
+      const file = await cvApi.fetchDocument(documentId);
+      setPreview({
+        url: file.url,
+        fileName: file.fileName || fileName,
+        isPdf: file.contentType.includes('pdf'),
+      });
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setViewingDocumentId(null);
+    }
+  };
+
+  const requestDelete = (
+    analysis: CvAnalysis,
+    documentId: string | undefined,
+    fileName: string,
+  ) => {
+    if (!documentId) {
+      setError('Document not found for this analysis.');
+      return;
+    }
+    setDeleteTarget({ analysis, documentId, fileName });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setError('');
+    try {
+      await cvApi.deleteDocument(deleteTarget.documentId);
+      setSelectedAnalysis((current) =>
+        current?.id === deleteTarget.analysis.id ? null : current,
+      );
+      setDeleteTarget(null);
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
+    } finally {
+      setDeleting(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <LoadingSpinner size="lg" />
+      <div className="analytics-dash--loading py-12">
+        <LoadingSpinner size="lg" label="Loading CV data…" />
       </div>
     );
   }
 
   return (
     <div>
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-slate-600">
-          Upload your CV and get ATS scoring with improvement suggestions
-        </p>
-        <label className="cursor-pointer rounded-lg bg-brand-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-brand-700">
-          {uploading ? 'Uploading...' : 'Upload CV'}
+      <div className="analytics-card__head analytics-card__head--row">
+        <div>
+          <h2 className="analytics-card__title">CV Analysis</h2>
+          <p className="analytics-card__subtitle">
+            Upload your CV and get ATS scoring with improvement suggestions
+          </p>
+        </div>
+        <label className="btn-aurora analytics-btn-interactive shrink-0 cursor-pointer px-4 py-2 text-center text-sm">
+          {uploading || analyzing ? 'Processing...' : 'Upload CV'}
           <input
             ref={fileRef}
             type="file"
             accept=".pdf,.doc,.docx"
             className="hidden"
             onChange={handleUpload}
-            disabled={uploading}
+            disabled={uploading || analyzing}
           />
         </label>
       </div>
 
       {error && (
         <div className="mb-4">
-          <ErrorAlert message={error} />
+          <ErrorAlert message={error} theme="dark" />
         </div>
       )}
       {analyzing && jobStatus && (
-        <div className="mb-4 flex items-center gap-3 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800">
+        <div className="analytics-banner analytics-banner--info mb-4">
           <LoadingSpinner size="sm" />
           {jobStatus}
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-1">
-          <h3 className="text-lg font-semibold text-slate-900">Your Documents</h3>
-          {documents.length === 0 ? (
-            <EmptyState title="No CV uploaded" description="Upload a PDF or DOCX to get started" />
-          ) : (
-            <ul className="space-y-2">
-              {documents.map((doc) => (
-                <li
-                  key={doc.id}
-                  className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-900">{doc.fileName}</p>
-                    <p className="text-xs text-slate-500">
-                      {(doc.fileSizeBytes / 1024).toFixed(1)} KB · {new Date(doc.uploadedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="ml-2 flex shrink-0 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleAnalyze(doc.id)}
-                      disabled={analyzing}
-                      className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700 disabled:opacity-60"
-                    >
-                      Analyze
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(doc.id)}
-                      className="rounded-lg border border-slate-200 px-2 py-1.5 text-xs text-slate-600 hover:bg-slate-50"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <h3 className="pt-4 text-lg font-semibold text-slate-900">Analysis History</h3>
+      <div className="cv-analysis-grid">
+        <aside className="cv-analysis-sidebar">
+          <h3 className="analytics-analyze-section-title">Analysis History</h3>
           {analyses.length === 0 ? (
-            <p className="text-sm text-slate-500">No analyses yet</p>
+            <EmptyState
+              theme="dark"
+              title="No analyses yet"
+              description="Upload a PDF or DOCX to run your first analysis"
+            />
           ) : (
-            <ul className="space-y-2">
-              {analyses.map((a) => (
-                <li key={a.id}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedAnalysis(a)}
-                    className={`w-full rounded-lg border p-3 text-left text-sm transition ${
-                      selectedAnalysis?.id === a.id
-                        ? 'border-brand-300 bg-brand-50'
-                        : 'border-slate-200 bg-white hover:bg-slate-50'
+            <ul className="cv-history-list mt-3 space-y-2">
+              {analyses.map((a) => {
+                const documentId = a.documentId;
+                const fileName = a.fileName ?? 'CV document';
+
+                return (
+                  <li
+                    key={a.id}
+                    className={`cv-history-item ${
+                      selectedAnalysis?.id === a.id ? 'cv-history-item--active' : ''
                     }`}
                   >
-                    <span className="font-medium">ATS {Math.round(Number(a.atsScore))}</span>
-                    <span className="ml-2 text-slate-500">
-                      {new Date(a.analyzedAt).toLocaleDateString()}
-                    </span>
-                  </button>
-                </li>
-              ))}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedAnalysis(a)}
+                      className="cv-history-item__body"
+                    >
+                      <span className="cv-history-item__score">
+                        ATS {Math.round(Number(a.atsScore))}
+                      </span>
+                      <span className="cv-history-item__filename" title={fileName}>
+                        {fileName}
+                      </span>
+                      <span className="cv-history-item__date">
+                        {new Date(a.analyzedAt).toLocaleDateString()}
+                      </span>
+                    </button>
+                    <div className="cv-history-item__actions">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleView(documentId, fileName);
+                        }}
+                        disabled={viewingDocumentId === documentId}
+                        className="analytics-icon-btn cv-history-icon-btn"
+                        aria-label={`View ${fileName}`}
+                        title="View document"
+                      >
+                        {viewingDocumentId === documentId ? (
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        ) : (
+                          <EyeIcon />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          requestDelete(a, documentId, fileName);
+                        }}
+                        className="analytics-icon-btn cv-history-icon-btn cv-history-icon-btn--danger"
+                        aria-label={`Delete ${fileName}`}
+                        title="Delete document"
+                      >
+                        <TrashIcon />
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
-        </div>
+        </aside>
 
-        <div className="lg:col-span-2">
+        <div className="cv-analysis-main">
           {selectedAnalysis ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
-                <ScoreGauge score={Number(selectedAnalysis.atsScore)} label="ATS Score" />
-                <div className="grid flex-1 grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-slate-900">
-                      {Math.round(Number(selectedAnalysis.breakdown.keywordScore))}
-                    </p>
-                    <p className="text-xs text-slate-500">Keywords</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-slate-900">
-                      {Math.round(Number(selectedAnalysis.breakdown.formatScore))}
-                    </p>
-                    <p className="text-xs text-slate-500">Format</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-slate-900">
-                      {Math.round(Number(selectedAnalysis.breakdown.completenessScore))}
-                    </p>
-                    <p className="text-xs text-slate-500">Completeness</p>
-                  </div>
-                </div>
-              </div>
-
-              {selectedAnalysis.keywordReport && (
-                <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                  {Object.entries(selectedAnalysis.keywordReport).map(([key, values]) => (
-                    <div key={key}>
-                      <h4 className="mb-2 text-sm font-semibold capitalize text-slate-900">{key}</h4>
-                      <div className="flex flex-wrap gap-1.5">
-                        {(values as string[]).map((v) => (
-                          <span
-                            key={v}
-                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                              key.toLowerCase().includes('miss')
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-emerald-100 text-emerald-800'
-                            }`}
-                          >
-                            {v}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {selectedAnalysis.suggestions?.length > 0 && (
-                <div className="mt-6">
-                  <h4 className="mb-2 text-sm font-semibold text-slate-900">Suggestions</h4>
-                  <ul className="list-inside list-disc space-y-1 text-sm text-slate-700">
-                    {selectedAnalysis.suggestions.map((s, i) => (
-                      <li key={i}>{s}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+            <CvAnalysisResults key={selectedAnalysis.id} analysis={selectedAnalysis} />
           ) : (
-            <EmptyState
-              title="No analysis selected"
-              description="Upload and analyze your CV to see detailed results"
-            />
+            <div className="flex h-full items-center justify-center">
+              <EmptyState
+                theme="dark"
+                title="No analysis selected"
+                description="Upload a CV or select an entry from analysis history"
+              />
+            </div>
           )}
         </div>
       </div>
+
+      {preview && (
+        <CvDocumentPreview
+          fileName={preview.fileName}
+          url={preview.url}
+          isPdf={preview.isPdf}
+          onClose={closePreview}
+        />
+      )}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete CV document?"
+        description={
+          deleteTarget
+            ? `"${deleteTarget.fileName}" and its analysis will be permanently removed. This cannot be undone.`
+            : ''
+        }
+        confirmLabel="Delete"
+        cancelLabel="Keep document"
+        loading={deleting}
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => !deleting && setDeleteTarget(null)}
+      />
     </div>
   );
 }

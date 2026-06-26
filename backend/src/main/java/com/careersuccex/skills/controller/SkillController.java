@@ -2,6 +2,7 @@ package com.careersuccex.skills.controller;
 
 import com.careersuccex.auth.security.SecurityUtils;
 import com.careersuccex.skills.dto.SkillDtos;
+import com.careersuccex.readiness.service.ReadinessRecalculationService;
 import com.careersuccex.skills.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -17,6 +18,7 @@ public class SkillController {
     private final SkillTaxonomyService taxonomyService;
     private final SkillAggregationService aggregationService;
     private final SkillGapService gapService;
+    private final ReadinessRecalculationService readinessRecalculationService;
     private final SecurityUtils securityUtils;
 
     @GetMapping("/api/v1/skills/taxonomy")
@@ -34,7 +36,9 @@ public class SkillController {
 
     @PutMapping("/api/v1/skills/self-assessment")
     public void selfAssessment(@RequestBody List<SkillDtos.SelfAssessmentItem> items) {
-        aggregationService.updateSelfAssessment(securityUtils.getCurrentUserId(), items);
+        UUID userId = securityUtils.getCurrentUserId();
+        aggregationService.updateSelfAssessment(userId, items);
+        readinessRecalculationService.recalculate(userId);
     }
 
     @GetMapping("/api/v1/skills/gaps")
