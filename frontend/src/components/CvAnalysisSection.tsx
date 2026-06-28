@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { cvApi } from '../api/cv';
 import { jobsApi } from '../api/jobs';
-import { profileApi } from '../api/profile';
 import { getErrorMessage } from '../api/client';
 import ErrorAlert from './ErrorAlert';
 import EmptyState from './EmptyState';
@@ -79,7 +78,6 @@ export default function CvAnalysisSection() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [analyses, setAnalyses] = useState<CvAnalysis[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<CvAnalysis | null>(null);
-  const [targetRoleId, setTargetRoleId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
@@ -109,20 +107,18 @@ export default function CvAnalysisSection() {
     setLoading(true);
     setError('');
     try {
-      const [hist, docs, profile] = await Promise.all([
+      const [hist, docs] = await Promise.all([
         cvApi.listAnalyses(),
         cvApi.listDocuments().catch(() => [] as CvDocument[]),
-        profileApi.get().catch(() => null),
       ]);
       const enriched = hist.map((analysis) => enrichAnalysis(analysis, docs));
       setAnalyses(enriched);
-      if (profile?.targetRoleId) setTargetRoleId(profile.targetRoleId);
       setSelectedAnalysis((current) => {
         if (current) {
           const match = enriched.find((a) => a.id === current.id);
           if (match) return match;
         }
-        return enriched[0] ?? null;
+        return null;
       });
     } catch (err) {
       setError(getErrorMessage(err));
@@ -141,7 +137,7 @@ export default function CvAnalysisSection() {
     setError('');
     setJobStatus('Starting analysis...');
     try {
-      const job = await cvApi.analyze(documentId, targetRoleId || undefined);
+      const job = await cvApi.analyze(documentId);
       setJobStatus('Processing...');
       const result = await jobsApi.pollUntilComplete(job.jobId, (s) =>
         setJobStatus(`Status: ${s.status}`),
@@ -250,17 +246,19 @@ export default function CvAnalysisSection() {
             Upload your CV and get ATS scoring with improvement suggestions
           </p>
         </div>
-        <label className="btn-aurora analytics-btn-interactive shrink-0 cursor-pointer px-4 py-2 text-center text-sm">
-          {uploading || analyzing ? 'Processing...' : 'Upload CV'}
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".pdf,.doc,.docx"
-            className="hidden"
-            onChange={handleUpload}
-            disabled={uploading || analyzing}
-          />
-        </label>
+        <div className="analytics-card__actions">
+          <label className="btn-aurora analytics-btn-interactive cursor-pointer px-4 py-2 text-center text-sm">
+            {uploading || analyzing ? 'Processing...' : 'Upload CV'}
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".pdf,.doc,.docx"
+              className="hidden"
+              onChange={handleUpload}
+              disabled={uploading || analyzing}
+            />
+          </label>
+        </div>
       </div>
 
       {error && (
@@ -279,11 +277,14 @@ export default function CvAnalysisSection() {
         <aside className="cv-analysis-sidebar">
           <h3 className="analytics-analyze-section-title">Analysis History</h3>
           {analyses.length === 0 ? (
-            <EmptyState
-              theme="dark"
-              title="No analyses yet"
-              description="Upload a PDF or DOCX to run your first analysis"
-            />
+            <div className="cv-analysis-sidebar__empty">
+              <EmptyState
+                size="compact"
+                theme="dark"
+                title="No analyses yet"
+                description="Upload a PDF or DOCX to run your first analysis"
+              />
+            </div>
           ) : (
             <ul className="cv-history-list mt-3 space-y-2">
               {analyses.map((a) => {
@@ -354,7 +355,7 @@ export default function CvAnalysisSection() {
           {selectedAnalysis ? (
             <CvAnalysisResults key={selectedAnalysis.id} analysis={selectedAnalysis} />
           ) : (
-            <div className="flex h-full items-center justify-center">
+            <div className="flex h-full w-full items-center justify-center p-4 sm:p-6">
               <EmptyState
                 theme="dark"
                 title="No analysis selected"

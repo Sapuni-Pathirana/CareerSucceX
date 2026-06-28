@@ -18,7 +18,7 @@ Career readiness platform for students and professionals — whether you're appl
 |-------|------------|
 | Frontend | React, TypeScript, Tailwind CSS, Vite, Recharts |
 | Backend | Spring Boot 3, Java 17+, Spring Security, JWT, JPA |
-| AI Service | Python FastAPI (Gemini, Groq, or OpenAI-compatible via ngrok) |
+| AI Service | Python FastAPI (Gemini, Groq, Grok/xAI, or OpenAI-compatible HTTP) |
 | Database | PostgreSQL |
 | Cache | Redis |
 | DevOps | Docker, GitHub Actions |
@@ -43,7 +43,7 @@ docker compose up --build
 Use this while editing the UI — **no rebuild** after each change.
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up postgres redis ai-service backend frontend-dev
+
 ```
 
 Edit files in `frontend/` and save — the browser refreshes automatically (Vite hot reload).
@@ -68,37 +68,29 @@ Each logged-in user connects **their own** GitHub account. The app stores one en
 
 Repeat with another account to verify each user gets their own connection and analysis.
 
-## AI provider (Gemini, Groq, or ngrok)
+## AI provider (required — Gemini, Groq, Grok, or HTTP)
 
-The AI service supports three providers. Set **one** in `.env`:
+CareerSucceX is **AI-powered**. CV analysis, GitHub analysis, interviews, roadmaps, and quizzes all call Grok (or your configured provider). There is **no rule-based fallback** — if AI is not configured or Grok fails, analysis returns an error instead of fake results.
 
-### Option A — ngrok + local LLM (Ollama)
+Set **one** provider in `.env`:
 
-Use this when you do not want a Gemini API key. Run a local model and expose it with [ngrok](https://ngrok.com/):
-
-```bash
-# Terminal 1 — start Ollama and pull a model
-ollama pull llama3.2
-ollama serve
-
-# Terminal 2 — tunnel Ollama (default port 11434)
-ngrok http 11434
-```
-
-Copy the ngrok HTTPS URL (e.g. `https://abc123.ngrok-free.app`) into `.env`:
+### Option A — Grok / xAI (recommended)
 
 ```env
-AI_PROVIDER=http
-HTTP_LLM_BASE_URL=https://abc123.ngrok-free.app/v1
-HTTP_LLM_MODEL=llama3.2
-HTTP_LLM_API_KEY=
+AI_PROVIDER=grok
+GROK_API_KEY=your_xai_api_key
+GROK_MODEL=grok-4-1-fast-non-reasoning
 ```
+
+Get a key at [console.x.ai](https://console.x.ai). You can also use `XAI_API_KEY` instead of `GROK_API_KEY`.
+
+**Important:** xAI requires prepaid API credits on your team account. If analysis fails with a credits/permission error, open [console.x.ai](https://console.x.ai) → Billing and add credits, then retry.
 
 Restart the AI service: `docker compose up -d --build ai-service`
 
-Health check: `http://localhost:8000/health` should show `"aiProvider":"http","aiEnabled":true`.
+Health check: `http://localhost:8000/health` should show `"aiProvider":"grok","aiEnabled":true`.
 
-### Option B — Groq (cloud, free tier)
+### Option B — Groq (cloud, **free tier** — best free option)
 
 ```env
 AI_PROVIDER=groq
@@ -106,14 +98,27 @@ GROQ_API_KEY=your_groq_api_key
 GROQ_MODEL=llama-3.3-70b-versatile
 ```
 
-Get a key at [console.groq.com](https://console.groq.com).
+Get a free key at [console.groq.com](https://console.groq.com) (sign up → **API Keys** → Create). No credit card required for the free tier.
 
-### Option C — Google Gemini
+### Option C — Google Gemini (**free tier**)
 
 ```env
 AI_PROVIDER=gemini
 GEMINI_API_KEY=your_gemini_api_key
 GEMINI_MODEL=gemini-2.0-flash
+```
+
+Get a free key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
+
+### Option D — OpenAI-compatible HTTP (e.g. local Ollama)
+
+Point at any OpenAI-compatible endpoint (local Ollama, etc.):
+
+```env
+AI_PROVIDER=http
+HTTP_LLM_BASE_URL=http://localhost:11434/v1
+HTTP_LLM_MODEL=llama3.2
+HTTP_LLM_API_KEY=
 ```
 
 ## Local Development (without Docker frontend)

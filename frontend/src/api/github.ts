@@ -23,7 +23,7 @@ export const githubApi = {
   },
 
   analyze: () =>
-    apiClient.post<GitHubAnalyzeResponse>('/github/analyze').then((r) => r.data),
+    apiClient.post<GitHubAnalyzeResponse>('/github/analyze', {}).then((r) => r.data),
 
   listAnalyses: async () => {
     try {

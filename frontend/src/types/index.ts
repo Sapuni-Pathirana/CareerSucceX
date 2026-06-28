@@ -89,6 +89,13 @@ export interface CvDocument {
   uploadedAt: string;
 }
 
+export interface RecommendationItem {
+  text: string;
+  justification?: string;
+  evidence?: string;
+  priority?: 'high' | 'medium' | 'low' | string;
+}
+
 export interface CvScoreBreakdown {
   keywordScore: number;
   formatScore: number;
@@ -99,10 +106,18 @@ export interface CvAnalysis {
   id: string;
   documentId?: string;
   fileName?: string;
+  targetRoleId?: string;
+  targetRoleTitle?: string;
   atsScore: number;
+  roleFitScore?: number;
+  roleFitSummary?: string;
   breakdown: CvScoreBreakdown;
   keywordReport: Record<string, string[]>;
+  summaryTips?: string[];
+  summaryText?: string;
+  reportSummary?: string;
   suggestions: string[];
+  recommendations?: RecommendationItem[];
   parsedData: Record<string, unknown>;
   analyzedAt: string;
 }
@@ -134,13 +149,24 @@ export interface GitHubAnalysis {
   activityScore: number;
   readmeScore: number;
   diversityScore: number;
+  roleAlignmentScore?: number;
+  roleAlignmentSummary?: string;
+  targetRoleId?: string;
+  targetRoleTitle?: string;
   languageStats?: Record<string, number>;
   repoStats?: {
     count?: number;
     stars?: number;
     languages?: number;
+    targetRoleTitle?: string;
+    roleAlignmentScore?: number;
+    roleAlignmentSummary?: string;
   };
   recommendations?: string[];
+  summaryTips?: string[];
+  summaryText?: string;
+  reportSummary?: string;
+  recommendationItems?: RecommendationItem[];
   analyzedAt: string;
 }
 

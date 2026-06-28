@@ -9,16 +9,51 @@ import java.util.Map;
 public class AiDtos {
 
     @Data
+    public static class RoleSkillRequirement {
+        private String skillName;
+        private int minLevel = 1;
+        private double weight = 1.0;
+    }
+
+    @Data
+    public static class RoleContext {
+        private String title;
+        private String industry = "";
+        private String description = "";
+        private List<RoleSkillRequirement> requiredSkills = List.of();
+    }
+
+    @Data
+    public static class RecommendationItem {
+        private String text;
+        private String justification;
+        private String evidence;
+        private String priority = "medium";
+    }
+
+    @Data
     public static class CvEnrichRequest {
         private String cvText;
         private String targetRole;
+        private RoleContext roleContext;
+        private boolean includeJustifications;
     }
 
     @Data
     public static class CvEnrichResponse {
         private Map<String, Object> parsedData;
         private List<String> suggestions;
+        private List<String> summaryTips;
+        private String summaryText;
+        private String reportSummary;
+        private List<RecommendationItem> recommendations;
         private BigDecimal completenessScore;
+        private BigDecimal roleFitScore;
+        private String roleFitSummary;
+        private BigDecimal keywordScore;
+        private List<String> matched;
+        private List<String> missing;
+        private List<RecommendationItem> keywordNotes;
     }
 
     @Data
@@ -26,6 +61,8 @@ public class AiDtos {
         private String cvText;
         private List<String> requiredKeywords;
         private String jobDescription;
+        private RoleContext roleContext;
+        private boolean includeJustifications;
     }
 
     @Data
@@ -33,6 +70,36 @@ public class AiDtos {
         private BigDecimal keywordScore;
         private List<String> matched;
         private List<String> missing;
+        private List<RecommendationItem> keywordNotes;
+    }
+
+    @Data
+    public static class GitHubRepoSummary {
+        private String name;
+        private String description = "";
+        private String language = "";
+        private int stars;
+        private List<String> topics = List.of();
+        private boolean hasReadme;
+        private String updatedAt = "";
+    }
+
+    @Data
+    public static class GitHubAnalyzeRequest {
+        private List<GitHubRepoSummary> repos;
+        private RoleContext roleContext;
+        private Map<String, Object> portfolioStats;
+        private boolean includeJustifications;
+    }
+
+    @Data
+    public static class GitHubAnalyzeResponse {
+        private List<RecommendationItem> recommendations;
+        private List<String> summaryTips;
+        private String summaryText;
+        private String reportSummary;
+        private BigDecimal roleAlignmentScore;
+        private String roleAlignmentSummary;
     }
 
     @Data

@@ -29,12 +29,18 @@ services:
     build: ./ai-service
     ports:
       - "8000:8000"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     environment:
       AI_PROVIDER: ${AI_PROVIDER:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
+      GROK_API_KEY: ${GROK_API_KEY:-}
+      XAI_API_KEY: ${XAI_API_KEY:-}
+      GROK_MODEL: ${GROK_MODEL:-grok-4-1-fast-non-reasoning}
       HTTP_LLM_BASE_URL: ${HTTP_LLM_BASE_URL:-}
       HTTP_LLM_API_KEY: ${HTTP_LLM_API_KEY:-}
       HTTP_LLM_MODEL: ${HTTP_LLM_MODEL:-}
@@ -66,6 +72,8 @@ services:
       AI_SERVICE_URL: http://ai-service:8000
       APP_CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://localhost:3000
       APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:5173}
+      CV_UPLOADS_PER_DAY: ${CV_UPLOADS_PER_DAY:-50}
+      GITHUB_REFRESHES_PER_DAY: ${GITHUB_REFRESHES_PER_DAY:-20}
     volumes:
       - cv_uploads:/app/uploads
     depends_on:

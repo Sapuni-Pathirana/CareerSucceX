@@ -19,12 +19,12 @@ public class AnalysisAsyncExecutor {
     private final GitHubAnalysisRunner githubAnalysisRunner;
 
     @Async("taskExecutor")
-    public void runCvAnalysis(UUID jobId, UUID analysisId, CvDocument doc, TargetRole targetRole) {
-        cvAnalysisRunner.run(jobId, analysisId, doc, targetRole);
+    public void runCvAnalysis(UUID jobId, UUID analysisId, CvDocument doc, TargetRole targetRole, boolean includeJustifications) {
+        cvAnalysisRunner.run(jobId, analysisId, doc, targetRole, includeJustifications);
     }
 
     @Async("taskExecutor")
-    public void runGitHubAnalysis(UUID jobId, UUID analysisId, GitHubConnection connection) {
-        githubAnalysisRunner.run(jobId, analysisId, connection);
+    public void runGitHubAnalysis(UUID jobId, UUID analysisId, GitHubConnection connection, TargetRole targetRole, boolean includeJustifications) {
+        githubAnalysisRunner.run(jobId, analysisId, connection, targetRole, includeJustifications);
     }
 }

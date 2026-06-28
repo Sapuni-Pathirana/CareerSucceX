@@ -37,7 +37,7 @@ export default function GitHubAnalysisSection() {
             const match = hist.find((a) => a.id === current.id);
             if (match) return match;
           }
-          return hist[0] ?? null;
+          return null;
         });
       } else {
         setAnalyses([]);
@@ -138,7 +138,7 @@ export default function GitHubAnalysisSection() {
           <h2 className="analytics-card__title">GitHub Analysis</h2>
           <p className="analytics-card__subtitle">{headerSubtitle}</p>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 analytics-card__actions">
           {connected ? (
             <>
               <button
@@ -206,11 +206,14 @@ export default function GitHubAnalysisSection() {
           <aside className="cv-analysis-sidebar">
             <h3 className="analytics-analyze-section-title">Analysis History</h3>
             {analyses.length === 0 ? (
-              <EmptyState
-                theme="dark"
-                title="No analyses yet"
-                description="Run your first GitHub analysis to see portfolio scores"
-              />
+              <div className="cv-analysis-sidebar__empty">
+                <EmptyState
+                  size="compact"
+                  theme="dark"
+                  title="No analyses yet"
+                  description="Run your first GitHub analysis to see portfolio scores"
+                />
+              </div>
             ) : (
               <ul className="cv-history-list mt-3 space-y-2">
                 {analyses.map((a) => (
@@ -245,7 +248,7 @@ export default function GitHubAnalysisSection() {
             {selectedAnalysis ? (
               <GitHubAnalysisResults key={selectedAnalysis.id} analysis={selectedAnalysis} />
             ) : (
-              <div className="flex h-full items-center justify-center">
+              <div className="flex h-full w-full items-center justify-center p-4 sm:p-6">
                 <EmptyState
                   theme="dark"
                   title="No analysis selected"

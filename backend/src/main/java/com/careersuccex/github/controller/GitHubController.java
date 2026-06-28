@@ -45,8 +45,8 @@ public class GitHubController {
     }
 
     @PostMapping("/analyze")
-    public GitHubDtos.AnalyzeResponse analyze() {
-        return gitHubService.analyze(securityUtils.getCurrentUserId());
+    public GitHubDtos.AnalyzeResponse analyze(@RequestBody(required = false) GitHubDtos.AnalyzeRequest request) {
+        return gitHubService.analyze(securityUtils.getCurrentUserId(), request);
     }
 
     @GetMapping("/analyses")

@@ -4,6 +4,8 @@ spring:
   jackson:
     serialization:
       write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
   datasource:
     url: jdbc:postgresql://localhost:5432/careersuccex
     username: careersuccex
@@ -44,8 +46,8 @@ app:
   ai-service-url: http://localhost:8000
   rate-limit:
     requests-per-minute: 100
-    cv-uploads-per-day: 5
-    github-refreshes-per-day: 3
+    cv-uploads-per-day: ${CV_UPLOADS_PER_DAY:5}
+    github-refreshes-per-day: ${GITHUB_REFRESHES_PER_DAY:3}
 
 resilience4j:
   circuitbreaker:

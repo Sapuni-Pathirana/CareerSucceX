@@ -10,11 +10,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface CvAnalysisRepository extends JpaRepository<CvAnalysis, UUID> {
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "cvDocument")
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"cvDocument", "targetRole"})
     List<CvAnalysis> findByCvDocumentUserIdOrderByAnalyzedAtDesc(UUID userId);
 
     List<CvAnalysis> findByCvDocumentIdOrderByAnalyzedAtDesc(UUID documentId);
 
-    @Query("SELECT a FROM CvAnalysis a JOIN FETCH a.cvDocument d JOIN FETCH d.user u WHERE a.id = :id AND u.id = :userId")
+    @Query("SELECT a FROM CvAnalysis a JOIN FETCH a.cvDocument d JOIN FETCH d.user u LEFT JOIN FETCH a.targetRole WHERE a.id = :id AND u.id = :userId")
     Optional<CvAnalysis> findByIdAndUserId(@Param("id") UUID id, @Param("userId") UUID userId);
 }

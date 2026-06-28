@@ -11,7 +11,7 @@ def health() -> HealthResponse:
     provider = llm.get_provider()
     enabled = llm.is_llm_enabled()
     return HealthResponse(
-        status="ok",
+        status="ok" if enabled else "degraded",
         aiProvider=provider,
         aiEnabled=enabled,
         geminiEnabled=provider == "gemini" and enabled,

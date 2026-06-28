@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import CountUp from './CountUp';
 import ScoreGauge from './ScoreGauge';
+import RecommendationList, { buildReportSummary, formatBriefFitSummary, normalizeRecommendations } from './RecommendationList';
 import type { CvAnalysis } from '../types';
 
 type CvAnalysisResultsProps = {
@@ -37,8 +38,15 @@ export default function CvAnalysisResults({ analysis }: CvAnalysisResultsProps) 
   }, [analysis.id]);
 
   const keywordEntries = analysis.keywordReport
-    ? sortKeywordEntries(analysis.keywordReport)
+    ? sortKeywordEntries(analysis.keywordReport).filter(
+        ([key]) => !['roleFitScore', 'roleFitSummary'].includes(key),
+      )
     : [];
+
+  const recommendations = normalizeRecommendations(
+    analysis.recommendations,
+    analysis.suggestions,
+  );
 
   const metrics = [
     { label: 'Keywords', value: Math.round(Number(analysis.breakdown.keywordScore)) },
@@ -72,6 +80,20 @@ export default function CvAnalysisResults({ analysis }: CvAnalysisResultsProps) 
             ))}
           </div>
 
+          {(analysis.roleFitSummary || analysis.roleFitScore != null) && (
+            <div className="cv-results-row cv-results-animate mb-2" style={{ animationDelay: '0.14s' }}>
+              <span className="cv-results-row__label">Role fit</span>
+              <div className="cv-results-row__content">
+                {analysis.roleFitScore != null && (
+                  <span className="cv-results-row__content-score">
+                    {Math.round(Number(analysis.roleFitScore))}/100
+                  </span>
+                )}
+                {formatBriefFitSummary(analysis.roleFitSummary)}
+              </div>
+            </div>
+          )}
+
           {keywordEntries.map(([key, values], sectionIndex) => {
             const isMissing = key.toLowerCase().includes('miss');
             return (
@@ -102,22 +124,32 @@ export default function CvAnalysisResults({ analysis }: CvAnalysisResultsProps) 
             );
           })}
 
-          {analysis.suggestions?.length > 0 && (
-            <div className="cv-results-row cv-results-animate" style={{ animationDelay: '0.35s' }}>
-              <span className="cv-results-row__label">Tips</span>
-              <ul className="cv-results-tips">
-                {analysis.suggestions.map((s, i) => (
-                  <li
-                    key={i}
-                    className="cv-results-tip cv-results-animate"
-                    style={{ animationDelay: `${0.4 + i * 0.05}s` }}
-                  >
-                    {s}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <RecommendationList
+            summaryText={analysis.summaryText}
+            summaryTips={analysis.summaryTips}
+            items={recommendations}
+            label="Summary"
+            reportContext={{
+              title: 'CV Analysis Report',
+              targetRole: analysis.targetRoleTitle,
+              analyzedAt: analysis.analyzedAt,
+              summary: buildReportSummary(
+                analysis.reportSummary,
+                analysis.summaryText,
+                analysis.roleFitSummary,
+                recommendations,
+              ),
+              scores: {
+                'ATS Score': Math.round(Number(analysis.atsScore)),
+                ...(analysis.roleFitScore != null
+                  ? { 'Role Fit': Math.round(Number(analysis.roleFitScore)) }
+                  : {}),
+                Keywords: Math.round(Number(analysis.breakdown.keywordScore)),
+                Format: Math.round(Number(analysis.breakdown.formatScore)),
+                Completeness: Math.round(Number(analysis.breakdown.completenessScore)),
+              },
+            }}
+          />
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import CountUp from './CountUp';
 import ScoreGauge from './ScoreGauge';
+import RecommendationList, { buildReportSummary, formatBriefFitSummary, normalizeRecommendations } from './RecommendationList';
 import type { GitHubAnalysis } from '../types';
 
 type GitHubAnalysisResultsProps = {
@@ -42,6 +43,11 @@ export default function GitHubAnalysisResults({ analysis }: GitHubAnalysisResult
   if (repoStats.stars != null) portfolioTags.push(`${repoStats.stars} stars`);
   if (repoStats.languages != null) portfolioTags.push(`${repoStats.languages} languages`);
 
+  const recommendations = normalizeRecommendations(
+    analysis.recommendationItems,
+    analysis.recommendations,
+  );
+
   let tagIndex = 0;
 
   return (
@@ -67,6 +73,20 @@ export default function GitHubAnalysisResults({ analysis }: GitHubAnalysisResult
               </div>
             ))}
           </div>
+
+          {(analysis.roleAlignmentSummary || analysis.roleAlignmentScore != null) && (
+            <div className="cv-results-row cv-results-animate mb-2" style={{ animationDelay: '0.14s' }}>
+              <span className="cv-results-row__label">Role alignment</span>
+              <div className="cv-results-row__content">
+                {analysis.roleAlignmentScore != null && (
+                  <span className="cv-results-row__content-score">
+                    {Math.round(Number(analysis.roleAlignmentScore))}/100
+                  </span>
+                )}
+                {formatBriefFitSummary(analysis.roleAlignmentSummary)}
+              </div>
+            </div>
+          )}
 
           {portfolioTags.length > 0 && (
             <div className="cv-results-row cv-results-animate" style={{ animationDelay: '0.18s' }}>
@@ -110,22 +130,32 @@ export default function GitHubAnalysisResults({ analysis }: GitHubAnalysisResult
             </div>
           )}
 
-          {analysis.recommendations && analysis.recommendations.length > 0 && (
-            <div className="cv-results-row cv-results-animate" style={{ animationDelay: '0.35s' }}>
-              <span className="cv-results-row__label">Tips</span>
-              <ul className="cv-results-tips">
-                {analysis.recommendations.map((tip, i) => (
-                  <li
-                    key={i}
-                    className="cv-results-tip cv-results-animate"
-                    style={{ animationDelay: `${0.4 + i * 0.05}s` }}
-                  >
-                    {tip}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <RecommendationList
+            summaryText={analysis.summaryText}
+            summaryTips={analysis.summaryTips}
+            items={recommendations}
+            label="Summary"
+            reportContext={{
+              title: 'GitHub Analysis Report',
+              targetRole: analysis.targetRoleTitle,
+              analyzedAt: analysis.analyzedAt,
+              summary: buildReportSummary(
+                analysis.reportSummary,
+                analysis.summaryText,
+                analysis.roleAlignmentSummary,
+                recommendations,
+              ),
+              scores: {
+                'Overall Score': Math.round(Number(analysis.overallScore)),
+                ...(analysis.roleAlignmentScore != null
+                  ? { 'Role Alignment': Math.round(Number(analysis.roleAlignmentScore)) }
+                  : {}),
+                Activity: Math.round(Number(analysis.activityScore)),
+                README: Math.round(Number(analysis.readmeScore)),
+                Diversity: Math.round(Number(analysis.diversityScore)),
+              },
+            }}
+          />
 
           <p className="cv-results-animate text-xs text-[#7aaea9]" style={{ animationDelay: '0.45s' }}>
             Analyzed {new Date(analysis.analyzedAt).toLocaleString()}

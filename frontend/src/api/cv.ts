@@ -15,9 +15,9 @@ export const cvApi = {
   listDocuments: () =>
     apiClient.get<CvDocument[]>('/cv/documents').then((r) => r.data),
 
-  analyze: (documentId: string, targetRoleId?: string) =>
+  analyze: (documentId: string) =>
     apiClient
-      .post<AnalyzeJobResponse>('/cv/analyze', { documentId, targetRoleId })
+      .post<AnalyzeJobResponse>('/cv/analyze', { documentId })
       .then((r) => r.data),
 
   getAnalysis: (id: string) =>
@@ -33,7 +33,7 @@ export const cvApi = {
       responseType: 'blob',
     });
 
-    const contentType = response.headers['content-type'] || 'application/octet-stream';
+    const contentType = String(response.headers['content-type'] ?? 'application/octet-stream');
 
     if (response.status >= 400 || contentType.includes('application/json')) {
       let message = `Failed to load document (${response.status})`;

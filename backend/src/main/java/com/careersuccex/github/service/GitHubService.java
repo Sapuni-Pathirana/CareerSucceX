@@ -7,6 +7,7 @@ import com.careersuccex.common.exception.ApiException;
 import com.careersuccex.common.service.AnalysisAsyncExecutor;
 import com.careersuccex.common.service.AnalysisJobService;
 import com.careersuccex.common.service.RateLimitService;
+import com.careersuccex.common.service.RoleContextBuilder;
 import com.careersuccex.common.util.EncryptionUtil;
 import com.careersuccex.common.util.JsonUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -24,7 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -42,6 +45,7 @@ public class GitHubService {
     private final RateLimitService rateLimitService;
     private final AnalysisAsyncExecutor analysisAsyncExecutor;
     private final JsonUtil jsonUtil;
+    private final RoleContextBuilder roleContextBuilder;
 
     @Value("${app.github.client-id:}")
     private String clientId;
@@ -87,16 +91,20 @@ public class GitHubService {
     }
 
     @Transactional
-    public GitHubDtos.AnalyzeResponse analyze(UUID userId) {
+    public GitHubDtos.AnalyzeResponse analyze(UUID userId, GitHubDtos.AnalyzeRequest request) {
         if (!rateLimitService.allowGithubRefresh(userId)) {
             throw new ApiException("Daily GitHub refresh limit reached", HttpStatus.TOO_MANY_REQUESTS);
         }
         GitHubConnection conn = connectionRepository.findByUserId(userId)
                 .orElseThrow(() -> new ApiException("GitHub not connected", HttpStatus.BAD_REQUEST));
+        UUID targetRoleId = request != null ? request.getTargetRoleId() : null;
+        boolean includeJustifications = true;
+        var targetRole = roleContextBuilder.resolveTargetRole(userId, targetRoleId);
+
         var job = jobService.createJob(conn.getUser(), JobType.GITHUB_SYNC);
         GitHubAnalysis analysis = GitHubAnalysis.builder().connection(conn).build();
         analysis = analysisRepository.save(analysis);
-        analysisAsyncExecutor.runGitHubAnalysis(job.getId(), analysis.getId(), conn);
+        analysisAsyncExecutor.runGitHubAnalysis(job.getId(), analysis.getId(), conn, targetRole, includeJustifications);
         return GitHubDtos.AnalyzeResponse.builder().jobId(job.getId()).analysisId(analysis.getId()).status("PENDING").build();
     }
 
@@ -161,15 +169,40 @@ public class GitHubService {
         Map<String, Object> languageStats = Map.of();
         Map<String, Object> repoStats = Map.of();
         List<String> recommendations = List.of();
+        List<String> summaryTips = List.of();
+        String summaryText = null;
+        String reportSummary = null;
+        List<GitHubDtos.RecommendationItem> recommendationItems = List.of();
+        BigDecimal roleAlignmentScore = null;
+        String roleAlignmentSummary = null;
+        String targetRoleTitle = null;
         try {
             if (a.getLanguageStats() != null) {
                 languageStats = jsonUtil.fromJson(a.getLanguageStats(), new TypeReference<>() {});
             }
             if (a.getRepoStats() != null) {
                 repoStats = jsonUtil.fromJson(a.getRepoStats(), new TypeReference<>() {});
+                if (repoStats.get("roleAlignmentScore") != null) {
+                    roleAlignmentScore = new BigDecimal(String.valueOf(repoStats.get("roleAlignmentScore")));
+                }
+                if (repoStats.get("roleAlignmentSummary") != null) {
+                    roleAlignmentSummary = String.valueOf(repoStats.get("roleAlignmentSummary"));
+                }
+                if (repoStats.get("targetRoleTitle") != null) {
+                    targetRoleTitle = String.valueOf(repoStats.get("targetRoleTitle"));
+                }
             }
             if (a.getRecommendations() != null) {
-                recommendations = jsonUtil.fromJson(a.getRecommendations(), new TypeReference<>() {});
+                RecommendationPayload payload = parseRecommendationPayload(a.getRecommendations());
+                summaryTips = payload.summaryTips();
+                summaryText = payload.summaryText();
+                reportSummary = payload.reportSummary();
+                recommendationItems = payload.recommendations();
+                recommendations = summaryText != null && !summaryText.isBlank()
+                        ? List.of(summaryText)
+                        : summaryTips.isEmpty()
+                                ? recommendationItems.stream().map(GitHubDtos.RecommendationItem::getText).toList()
+                                : summaryTips;
             }
         } catch (Exception ignored) {}
 
@@ -179,10 +212,102 @@ public class GitHubService {
                 .activityScore(a.getActivityScore())
                 .readmeScore(a.getReadmeScore())
                 .diversityScore(a.getDiversityScore())
+                .roleAlignmentScore(roleAlignmentScore)
+                .roleAlignmentSummary(roleAlignmentSummary)
+                .targetRoleTitle(targetRoleTitle)
                 .languageStats(languageStats)
                 .repoStats(repoStats)
+                .summaryTips(summaryTips)
+                .summaryText(summaryText)
+                .reportSummary(reportSummary)
                 .recommendations(recommendations)
+                .recommendationItems(recommendationItems)
                 .analyzedAt(a.getAnalyzedAt())
                 .build();
+    }
+
+    private record RecommendationPayload(
+            List<String> summaryTips,
+            String summaryText,
+            String reportSummary,
+            List<GitHubDtos.RecommendationItem> recommendations) {}
+
+    private RecommendationPayload parseRecommendationPayload(String json) {
+        try {
+            Object raw = jsonUtil.fromJson(json, Object.class);
+            if (raw instanceof Map<?, ?> map) {
+                List<String> tips = parseSummaryTips(map.get("summaryTips"));
+                String text = map.get("summaryText") != null ? String.valueOf(map.get("summaryText")).trim() : "";
+                String report = map.get("reportSummary") != null ? String.valueOf(map.get("reportSummary")).trim() : "";
+                List<GitHubDtos.RecommendationItem> items = parseRecommendationEntries(map.get("recommendations"));
+                if (items.isEmpty()) {
+                    items = parseRecommendationEntries(raw);
+                }
+                if (text.isBlank() && !tips.isEmpty()) {
+                    text = String.join(" ", tips);
+                }
+                if (text.isBlank() && !items.isEmpty()) {
+                    text = items.stream()
+                            .map(GitHubDtos.RecommendationItem::getText)
+                            .limit(3)
+                            .reduce((a, b) -> a + " " + b)
+                            .orElse("");
+                }
+                if (report.isBlank() && !text.isBlank()) {
+                    report = text;
+                }
+                if (report.isBlank() && !items.isEmpty()) {
+                    report = items.stream()
+                            .map(GitHubDtos.RecommendationItem::getText)
+                            .limit(4)
+                            .reduce((a, b) -> a + "; " + b)
+                            .map(s -> "Priority improvements include: " + s + ".")
+                            .orElse("");
+                }
+                return new RecommendationPayload(tips, text, report, items);
+            }
+            return new RecommendationPayload(List.of(), "", "", parseRecommendationEntries(raw));
+        } catch (Exception e) {
+            return new RecommendationPayload(List.of(), "", "", List.of());
+        }
+    }
+
+    private List<String> parseSummaryTips(Object raw) {
+        if (!(raw instanceof List<?> list)) {
+            return List.of();
+        }
+        List<String> tips = new ArrayList<>();
+        for (Object entry : list) {
+            if (entry == null) continue;
+            String text = String.valueOf(entry).trim();
+            if (!text.isBlank()) {
+                tips.add(text);
+            }
+        }
+        return tips.size() > 4 ? tips.subList(0, 4) : tips;
+    }
+
+    private List<GitHubDtos.RecommendationItem> parseRecommendationEntries(Object raw) {
+        if (!(raw instanceof List<?> entries)) {
+            return List.of();
+        }
+        List<GitHubDtos.RecommendationItem> items = new ArrayList<>();
+        for (Object entry : entries) {
+            if (entry instanceof String text) {
+                items.add(GitHubDtos.RecommendationItem.builder().text(text).priority("medium").build());
+            } else if (entry instanceof Map<?, ?> map) {
+                items.add(GitHubDtos.RecommendationItem.builder()
+                        .text(map.get("text") != null ? String.valueOf(map.get("text")) : "")
+                        .justification(map.get("justification") != null ? String.valueOf(map.get("justification")) : null)
+                        .evidence(map.get("evidence") != null ? String.valueOf(map.get("evidence")) : null)
+                        .priority(map.get("priority") != null ? String.valueOf(map.get("priority")) : "medium")
+                        .build());
+            }
+        }
+        return items.stream().filter(i -> i.getText() != null && !i.getText().isBlank()).toList();
+    }
+
+    private List<GitHubDtos.RecommendationItem> parseRecommendations(String json) {
+        return parseRecommendationPayload(json).recommendations();
     }
 }

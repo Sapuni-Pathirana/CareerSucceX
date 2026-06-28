@@ -6,6 +6,7 @@ interface EmptyStateProps {
   action?: ReactNode;
   icon?: string;
   theme?: 'light' | 'dark';
+  size?: 'default' | 'compact';
 }
 
 export default function EmptyState({
@@ -14,19 +15,27 @@ export default function EmptyState({
   action,
   icon = '◎',
   theme = 'light',
+  size = 'default',
 }: EmptyStateProps) {
   const isDark = theme === 'dark';
+  const isCompact = size === 'compact';
 
   return (
     <div
-      className={`flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 text-center animate-fade-in ${
+      className={`flex min-w-0 flex-col items-center justify-center border border-dashed text-center animate-fade-in ${
+        isCompact
+          ? 'mx-auto w-full max-w-[240px] rounded-xl px-4 py-6'
+          : 'w-full rounded-2xl px-6 py-12 sm:px-10 sm:py-16'
+      } ${
         isDark
           ? 'border-white/[0.08] bg-[#114852]/50'
           : 'border-slate-200 bg-white/60 backdrop-blur-sm'
       }`}
     >
       <div
-        className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl text-2xl ${
+        className={`flex items-center justify-center rounded-xl ${
+          isCompact ? 'mb-2.5 h-9 w-9 text-base' : 'mb-4 h-14 w-14 rounded-2xl text-2xl'
+        } ${
           isDark
             ? 'bg-[#008080]/20 text-[#00B1B1] ring-1 ring-[#008080]/30'
             : 'bg-brand-50 text-brand-400 shadow-glow-sm ring-1 ring-brand-100'
@@ -34,17 +43,23 @@ export default function EmptyState({
       >
         {icon}
       </div>
-      <h3 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</h3>
+      <h3
+        className={`max-w-md text-balance font-semibold ${
+          isCompact ? 'text-sm' : 'text-base'
+        } ${isDark ? 'text-white' : 'text-slate-900'}`}
+      >
+        {title}
+      </h3>
       {description && (
         <p
-          className={`mt-1.5 max-w-sm text-sm leading-relaxed ${
-            isDark ? 'text-[#7aaea9]' : 'text-slate-500'
-          }`}
+          className={`text-balance leading-relaxed ${
+            isCompact ? 'mt-1 max-w-[200px] text-xs' : 'mt-1.5 max-w-md text-sm'
+          } ${isDark ? 'text-[#7aaea9]' : 'text-slate-500'}`}
         >
           {description}
         </p>
       )}
-      {action && <div className="mt-5">{action}</div>}
+      {action && <div className={isCompact ? 'mt-3' : 'mt-5'}>{action}</div>}
     </div>
   );
 }
